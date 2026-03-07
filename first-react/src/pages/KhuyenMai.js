@@ -8,9 +8,9 @@ import ProductSection from '../components/home/ProductSection';
 import '../css/binh.css';
 import '../css/MyCoupons.css';
 
-const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const url = process.env.REACT_APP_BACKEND_URL || "http://localhost:8080";
 const couponAPI = axios.create({
-    baseURL: url + '/coupons',
+    baseURL: url + '/api/coupons',
     headers: { "Content-Type": "application/json" },
 });
 
@@ -32,8 +32,8 @@ const KhuyenMai = () => {
 
     const fetchCoupons = async () => {
         try {
-            const res = await couponAPI.get('/');
-            setCoupons(res.data.filter(c => c.active));
+            const res = await couponAPI.get('');
+            setCoupons((res.data.data || res.data).filter(c => !new Date(c.expiryDate) < new Date()));
         } catch (err) {
             console.error('Error fetching coupons:', err);
         }
@@ -89,7 +89,7 @@ const KhuyenMai = () => {
                                         <div key={coupon.id} className={`coupon-card ${expired || soldOut ? 'expired' : ''}`}>
                                             <div className={`coupon-left ${coupon.type}`}>
                                                 <span className="coupon-value">
-                                                    {coupon.type === 'percent' ? `${coupon.value}%` : `${(coupon.value / 1000).toFixed(0)}K`}
+                                                    {coupon.type === 'percent' ? `${coupon.discountValue}%` : `${(coupon.discountValue / 1000).toFixed(0)}K`}
                                                 </span>
                                                 <span className="coupon-type-label">
                                                     {coupon.type === 'percent' ? 'GIẢM GIÁ' : 'GIẢM'}
@@ -99,8 +99,8 @@ const KhuyenMai = () => {
                                                 <p className="coupon-code">{coupon.code}</p>
                                                 <p className="coupon-desc">
                                                     {coupon.type === 'percent'
-                                                        ? `Giảm ${coupon.value}% cho đơn từ ${coupon.minOrder.toLocaleString('vi-VN')}₫. Tối đa ${coupon.maxDiscount.toLocaleString('vi-VN')}₫`
-                                                        : `Giảm ${coupon.value.toLocaleString('vi-VN')}₫ cho đơn từ ${coupon.minOrder.toLocaleString('vi-VN')}₫`
+                                                        ? `Giảm ${coupon.discountValue}% cho đơn từ ${coupon.minOrderValue.toLocaleString('vi-VN')}₫. Tối đa ${coupon.maxDiscount.toLocaleString('vi-VN')}₫`
+                                                        : `Giảm ${coupon.discountValue.toLocaleString('vi-VN')}₫ cho đơn từ ${coupon.minOrderValue.toLocaleString('vi-VN')}₫`
                                                     }
                                                 </p>
                                                 <div className="coupon-meta">

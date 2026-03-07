@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const url = process.env.REACT_APP_BACKEND_URL || "http://localhost:8080";
 const couponAPI = axios.create({
-    baseURL: url + '/coupons',
+    baseURL: url + '/api/coupons',
     headers: { "Content-Type": "application/json" },
 });
 
@@ -13,22 +13,28 @@ const AdminCoupons = () => {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({
-        code: '', type: 'percent', value: '', minOrder: '', maxDiscount: '',
-        usageLimit: '', expiryDate: '', active: true
+        code: '', type: 'percent', discountValue: '', minOrderValue: '', maxDiscount: '',
+        usageLimit: '', expiryDate: ''
     });
 
     useEffect(() => { fetchCoupons(); }, []);
 
     const fetchCoupons = async () => {
         try {
-            const res = await couponAPI.get('/');
-            setCoupons(res.data);
-        } catch (err) { console.error(err); }
+            const res = await couponAPI.get('');
+            console.log('API Response:', res);
+            console.log('Data:', res.data);
+            const couponsList = res.data.data || res.data;
+            console.log('Coupons:', couponsList);
+            setCoupons(couponsList);
+        } catch (err) { 
+            console.error('Lỗi lấy danh sách mã giảm giá:', err); 
+        }
         setLoading(false);
     };
 
     const resetForm = () => {
-        setForm({ code: '', type: 'percent', value: '', minOrder: '', maxDiscount: '', usageLimit: '', expiryDate: '', active: true });
+        setForm({ code: '', type: 'percent', discountValue: '', minOrderValue: '', maxDiscount: '', usageLimit: '', expiryDate: '' });
         setEditing(null);
         setShowForm(false);
     };
@@ -36,34 +42,38 @@ const AdminCoupons = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const data = {
-            ...form,
-            value: Number(form.value),
-            minOrder: Number(form.minOrder),
+            code: form.code,
+            type: form.type,
+            discountValue: Number(form.discountValue),
+            minOrderValue: Number(form.minOrderValue),
             maxDiscount: Number(form.maxDiscount) || 0,
             usageLimit: Number(form.usageLimit),
-            usedCount: editing ? editing.usedCount : 0
+            expiryDate: form.expiryDate
         };
         try {
             if (editing) {
-                await couponAPI.put(`/${editing.id}`, { ...data, id: editing.id });
+                await couponAPI.patch(`/${editing.id}`, data);
             } else {
-                await couponAPI.post('/', data);
+                await couponAPI.post('', data);
             }
             fetchCoupons();
             resetForm();
-        } catch (err) { console.error(err); alert('Lỗi lưu mã giảm giá!'); }
+        } catch (err) { 
+            console.error('Lỗi lưu mã giảm giá:', err); 
+            alert('Lỗi lưu mã giảm giá!'); 
+        }
     };
 
     const handleEdit = (coupon) => {
+        console.log('Edit coupon:', coupon);
         setForm({
             code: coupon.code,
             type: coupon.type,
-            value: coupon.value,
-            minOrder: coupon.minOrder,
+            discountValue: coupon.discountValue,
+            minOrderValue: coupon.minOrderValue,
             maxDiscount: coupon.maxDiscount || 0,
             usageLimit: coupon.usageLimit,
-            expiryDate: coupon.expiryDate,
-            active: coupon.active
+            expiryDate: coupon.expiryDate
         });
         setEditing(coupon);
         setShowForm(true);
@@ -74,7 +84,10 @@ const AdminCoupons = () => {
         try {
             await couponAPI.delete(`/${id}`);
             fetchCoupons();
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error('Lỗi xóa mã giảm giá:', err); 
+            alert('Lỗi xóa mã giảm giá!');
+        }
     };
 
     if (loading) return <div className="admin-loading"><div className="spinner"></div><p>Đang tải...</p></div>;
@@ -110,11 +123,11 @@ const AdminCoupons = () => {
                             <div className="admin-form-row">
                                 <div className="admin-form-group">
                                     <label>{form.type === 'percent' ? 'Phần trăm giảm (%)' : 'Số tiền giảm (₫)'} *</label>
-                                    <input type="number" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} required min="1" />
+                                    <input type="number" value={form.discountValue} onChange={e => setForm({ ...form, discountValue: e.target.value })} required min="1" />
                                 </div>
                                 <div className="admin-form-group">
                                     <label>Đơn hàng tối thiểu (₫) *</label>
-                                    <input type="number" value={form.minOrder} onChange={e => setForm({ ...form, minOrder: e.target.value })} required min="0" />
+                                    <input type="number" value={form.minOrderValue} onChange={e => setForm({ ...form, minOrderValue: e.target.value })} required min="0" />
                                 </div>
                             </div>
                             {form.type === 'percent' && (
@@ -150,6 +163,7 @@ const AdminCoupons = () => {
                             <th>Mã</th>
                             <th>Loại</th>
                             <th>Giá trị</th>
+                            <th>Giá trị tối đa</th>
                             <th>Đơn tối thiểu</th>
                             <th>Đã dùng</th>
                             <th>HSD</th>
@@ -159,20 +173,21 @@ const AdminCoupons = () => {
                     </thead>
                     <tbody>
                         {coupons.length === 0 ? (
-                            <tr><td colSpan="8" style={{ textAlign: 'center', color: '#999', padding: '30px' }}>Chưa có mã giảm giá</td></tr>
+                            <tr><td colSpan="9" style={{ textAlign: 'center', color: '#999', padding: '30px' }}>Chưa có mã giảm giá</td></tr>
                         ) : coupons.map(c => {
                             const expired = new Date(c.expiryDate) < new Date();
                             return (
                                 <tr key={c.id}>
                                     <td><strong style={{ color: '#EE1926' }}>{c.code}</strong></td>
                                     <td>{c.type === 'percent' ? 'Phần trăm' : 'Cố định'}</td>
-                                    <td>{c.type === 'percent' ? `${c.value}%` : `${c.value.toLocaleString('vi-VN')}₫`}</td>
-                                    <td>{c.minOrder.toLocaleString('vi-VN')}₫</td>
+                                    <td>{c.type === 'percent' ? `${c.discountValue}%` : `${c.discountValue.toLocaleString('vi-VN')}₫`}</td>
+                                    <td>{c.type === 'percent' ? (c.maxDiscount ? c.maxDiscount.toLocaleString('vi-VN') + '₫' : 'Không giới hạn') : '-'}</td>
+                                    <td>{c.minOrderValue.toLocaleString('vi-VN')}₫</td>
                                     <td>{c.usedCount || 0}/{c.usageLimit}</td>
                                     <td>{new Date(c.expiryDate).toLocaleDateString('vi-VN')}</td>
                                     <td>
-                                        <span className={`admin-badge ${expired ? 'cancelled' : c.active ? 'delivered' : 'pending'}`}>
-                                            {expired ? 'Hết hạn' : c.active ? 'Hoạt động' : 'Tắt'}
+                                        <span className={`admin-badge ${expired ? 'cancelled' : 'delivered'}`}>
+                                            {expired ? 'Đã dừng' : 'Hoạt động'}
                                         </span>
                                     </td>
                                     <td>

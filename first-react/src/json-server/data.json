@@ -6,12 +6,19 @@
       "name": "tra",
       "numberphone": "12345",
       "password": "2025",
-      "cart": [],
+      "cart": [
+        {
+          "id": "2",
+          "number": 1
+        }
+      ],
       "savedCoupons": [
         "1",
         "2",
         "3",
-        "4"
+        "4",
+        "143d",
+        2
       ]
     },
     {
@@ -56,20 +63,7 @@
       "numberphone": "0123",
       "email": "sera@gmail.com",
       "password": "sera",
-      "cart": [
-        {
-          "id": "2",
-          "number": 1
-        },
-        {
-          "id": "4",
-          "number": 1
-        },
-        {
-          "id": "1",
-          "number": 1
-        }
-      ],
+      "cart": [],
       "savedCoupons": [
         "1"
       ]
@@ -88,8 +82,16 @@
       "email": "admin@shop.com",
       "password": "admin123",
       "role": "admin",
-      "cart": [],
-      "savedCoupons": []
+      "cart": [
+        {
+          "id": "4",
+          "number": 1
+        }
+      ],
+      "savedCoupons": [
+        2,
+        3
+      ]
     }
   ],
   "items": [
@@ -98,7 +100,7 @@
       "name": "[New 100%] Laptop Asus TUF Gaming A15 FA506NF-HN005W",
       "price": 29999000,
       "monthly": 299990,
-      "remain": 76,
+      "remain": 68,
       "cpu": "AMD Ryzen 7735H (3.20 GHz - 4.75 GHz, 8 cores, 16 threads)",
       "ram": "Ram 16GB LPDDR5 6400MHz",
       "drive": "512 GB SSD",
@@ -120,7 +122,7 @@
       "name": "Laptop HP Envy x360 2-in-1 2024",
       "price": 18690000,
       "monthly": 10000000,
-      "remain": 93,
+      "remain": 84,
       "cpu": "Ryzen 7 8840H",
       "ram": "16GB",
       "drive": "1TB",
@@ -164,7 +166,7 @@
       "name": "Lenovo Yoga 6 13ABR8 - AMD Ryzen 5-7530U",
       "price": 11990000,
       "monthly": 1199000,
-      "remain": 87,
+      "remain": 85,
       "cpu": "AMD Ryzen 5-7530U",
       "ram": "RAM 8GB LPDDR4 4266Mhz",
       "drive": "SSD 256GB NVMe",
@@ -232,7 +234,7 @@
       "originalPrice": 30890000,
       "discountPercent": 18,
       "monthly": 2549000,
-      "remain": 10,
+      "remain": 7,
       "cpu": "Intel Core i5-13500HX",
       "ram": "16GB DDR5 4800MHz",
       "drive": "512GB PCIe NVMe SSD",
@@ -254,7 +256,7 @@
       "originalPrice": 18990000,
       "discountPercent": 16,
       "monthly": 1599000,
-      "remain": 15,
+      "remain": 13,
       "cpu": "Intel Core i5-11400H",
       "ram": "16GB DDR4 3200MHz",
       "drive": "512GB PCIe NVMe SSD",
@@ -312,6 +314,27 @@
       "images": [
         "/images/dell2.png"
       ]
+    },
+    {
+      "id": "94ff",
+      "name": "Laptop MSI Gaming Thin 15 B13UC-3247VN",
+      "price": 19490000,
+      "remain": 0,
+      "cpu": "Intel Core i5-13420H",
+      "ram": "16",
+      "drive": "512",
+      "card": "rtx",
+      "screen": "15.6 ",
+      "camera": "1920 x 1080",
+      "port": "1xType-C (USB3.2 Gen1 / DisplayPort) 3x Type-A USB3.2 Gen1 1x HDMI (4K @ 30Hz)",
+      "weight": "2kg",
+      "pin": "70 wh",
+      "system": "window ",
+      "images": [
+        "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/l/a/laptop_msi_gaming_thin_15_b13uc-3247vn_-_3.png",
+        "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_2__10_58.png"
+      ],
+      "monthly": 1624167
     }
   ],
   "orders": [
@@ -479,56 +502,221 @@
       "status": "cancelled",
       "createdAt": "2026-02-24T15:05:57.243Z",
       "cancelReason": "không đủ tiền"
+    },
+    {
+      "id": "0e43",
+      "userId": "1",
+      "customerName": "tra",
+      "phone": "012345",
+      "address": "dv",
+      "note": "sv",
+      "payment": "cod",
+      "items": [
+        {
+          "id": "1",
+          "name": "[New 100%] Laptop Asus TUF Gaming A15 FA506NF-HN005W",
+          "price": 29999000,
+          "quantity": 1,
+          "image": "https://laptopaz.vn/media/product/3213_asus_tuf_gaming_a15_fa506nf.jpg"
+        }
+      ],
+      "totalPrice": 27999000,
+      "originalPrice": 29999000,
+      "couponCode": "GIAM10PHAN",
+      "discount": 2000000,
+      "status": "confirmed",
+      "createdAt": "2026-03-03T08:19:41.325Z"
+    },
+    {
+      "id": "b081",
+      "userId": "admin1",
+      "customerName": "Admin",
+      "phone": "d",
+      "address": "dg",
+      "note": "dg",
+      "payment": "cod",
+      "items": [
+        {
+          "id": "1",
+          "name": "[New 100%] Laptop Asus TUF Gaming A15 FA506NF-HN005W",
+          "price": 29999000,
+          "quantity": 1,
+          "image": "https://laptopaz.vn/media/product/3213_asus_tuf_gaming_a15_fa506nf.jpg"
+        }
+      ],
+      "totalPrice": 29999000,
+      "originalPrice": 29999000,
+      "couponCode": null,
+      "discount": 0,
+      "status": "delivered",
+      "createdAt": "2026-03-03T08:22:28.975Z"
+    },
+    {
+      "id": "cd48",
+      "userId": "7d0f",
+      "customerName": "sera",
+      "phone": "sav",
+      "address": "áv",
+      "note": "av",
+      "payment": "cod",
+      "items": [
+        {
+          "id": "2",
+          "name": "Laptop HP Envy x360 2-in-1 2024",
+          "price": 18690000,
+          "quantity": 1,
+          "image": "https://laptopaz.vn/media/product/3413_3290_hp_envy_x360_14_fa0013dx_2024_1716883081.jpg"
+        },
+        {
+          "id": "4",
+          "name": "Lenovo Yoga 6 13ABR8 - AMD Ryzen 5-7530U",
+          "price": 11990000,
+          "quantity": 1,
+          "image": "https://laptoplc.com.vn/wp-content/uploads/2023/10/4.jpeg"
+        },
+        {
+          "id": "1",
+          "name": "[New 100%] Laptop Asus TUF Gaming A15 FA506NF-HN005W",
+          "price": 29999000,
+          "quantity": 1,
+          "image": "https://laptopaz.vn/media/product/3213_asus_tuf_gaming_a15_fa506nf.jpg"
+        }
+      ],
+      "totalPrice": 58679000,
+      "originalPrice": 60679000,
+      "couponCode": "GIAM10PHAN",
+      "discount": 2000000,
+      "status": "delivered",
+      "createdAt": "2026-03-03T08:23:59.085Z"
+    },
+    {
+      "id": "1f8d",
+      "userId": "1",
+      "customerName": "tra",
+      "phone": "z db",
+      "address": "db ",
+      "note": "zds ",
+      "payment": "cod",
+      "items": [
+        {
+          "id": "2",
+          "name": "Laptop HP Envy x360 2-in-1 2024",
+          "price": 18690000,
+          "quantity": 2,
+          "image": "https://laptopaz.vn/media/product/3413_3290_hp_envy_x360_14_fa0013dx_2024_1716883081.jpg"
+        },
+        {
+          "id": "1",
+          "name": "[New 100%] Laptop Asus TUF Gaming A15 FA506NF-HN005W",
+          "price": 29999000,
+          "quantity": 2,
+          "image": "https://laptopaz.vn/media/product/3213_asus_tuf_gaming_a15_fa506nf.jpg"
+        }
+      ],
+      "totalPrice": 96878000,
+      "originalPrice": 97378000,
+      "couponCode": "GIAM10%",
+      "discount": 500000,
+      "status": "cancelled",
+      "createdAt": "2026-03-06T08:57:36.206Z"
+    },
+    {
+      "id": "c75c",
+      "userId": "admin1",
+      "customerName": "Admin",
+      "phone": "34",
+      "address": "34",
+      "note": "34",
+      "payment": "cod",
+      "items": [
+        {
+          "id": "12",
+          "name": "Laptop Gaming Acer Nitro 5 2021 AN515-57-5700 (Core i5 - 11400H, 16GB, 512GB, RTX3050Ti, 15.6'' FHD IPS 144Hz)",
+          "price": 15990000,
+          "quantity": 1,
+          "image": "/images/acer2.png"
+        }
+      ],
+      "totalPrice": 15989990,
+      "originalPrice": 15990000,
+      "couponCode": "GIAM10D",
+      "discount": 10,
+      "status": "pending",
+      "createdAt": "2026-03-06T09:09:14.976Z"
+    },
+    {
+      "id": "1903",
+      "userId": "admin1",
+      "customerName": "Admin",
+      "phone": "ok",
+      "address": "ok",
+      "note": "ok",
+      "payment": "zalopay",
+      "items": [
+        {
+          "id": "11",
+          "name": "Acer Predator Helios Neo 2023 PHN16-71-50JG (Core i5-13500HX, 16GB, 512GB, RTX 4050 6GB, 16\" FHD+ 165Hz)",
+          "price": 25490000,
+          "quantity": 2,
+          "image": "/images/acer1.png"
+        }
+      ],
+      "totalPrice": 50980000,
+      "originalPrice": 50980000,
+      "couponCode": null,
+      "discount": 0,
+      "status": "shipping",
+      "createdAt": "2026-03-07T05:50:08.254Z"
+    },
+    {
+      "id": "0067",
+      "userId": "admin1",
+      "customerName": "Admin",
+      "phone": "s",
+      "address": "d",
+      "note": "d",
+      "payment": "cod",
+      "items": [
+        {
+          "id": "2",
+          "name": "Laptop HP Envy x360 2-in-1 2024",
+          "price": 18690000,
+          "quantity": 2,
+          "image": "https://laptopaz.vn/media/product/3413_3290_hp_envy_x360_14_fa0013dx_2024_1716883081.jpg"
+        }
+      ],
+      "totalPrice": 37379960,
+      "originalPrice": 37380000,
+      "couponCode": "B",
+      "discount": 40,
+      "status": "pending",
+      "createdAt": "2026-03-07T05:54:03.362Z"
     }
   ],
   "coupons": [
     {
-      "id": "1",
-      "code": "GIAM10PHAN",
-      "type": "percent",
+      "code": "B",
+      "type": "fixed",
+      "value": 40,
+      "minOrder": 50,
+      "maxDiscount": 0,
+      "usageLimit": 1,
+      "expiryDate": "2050-01-01",
+      "active": true,
+      "usedCount": 1,
+      "id": "a7e5"
+    },
+    {
+      "code": "GIAM10D",
+      "type": "fixed",
       "value": 10,
-      "minOrder": 500000,
-      "maxDiscount": 2000000,
-      "usageLimit": 100,
-      "usedCount": 6,
-      "expiryDate": "2026-12-31",
-      "active": true
-    },
-    {
-      "id": "2",
-      "code": "GIAM500K",
-      "type": "fixed",
-      "value": 500000,
-      "minOrder": 5000000,
-      "maxDiscount": 500000,
-      "usageLimit": 50,
-      "usedCount": 3,
-      "expiryDate": "2026-12-31",
-      "active": true
-    },
-    {
-      "id": "3",
-      "code": "WELCOME15",
-      "type": "percent",
-      "value": 15,
-      "minOrder": 1000000,
-      "maxDiscount": 3000000,
-      "usageLimit": 200,
-      "usedCount": 12,
-      "expiryDate": "2026-06-30",
-      "active": true
-    },
-    {
-      "id": "4",
-      "code": "FREESHIP99K",
-      "type": "fixed",
-      "value": 99000,
-      "minOrder": 300000,
-      "maxDiscount": 99000,
-      "usageLimit": 500,
-      "usedCount": 45,
-      "expiryDate": "2026-12-31",
-      "active": true
+      "minOrder": 0,
+      "maxDiscount": 0,
+      "usageLimit": 1,
+      "expiryDate": "2040-01-01",
+      "active": true,
+      "usedCount": 1,
+      "id": "9ed0"
     }
   ]
 }
