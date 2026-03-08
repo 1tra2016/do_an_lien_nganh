@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const url = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
 const orderAPI = axios.create({
-    baseURL: url + '/orders',
+    baseURL: url + '/api/orders',
     headers: { "Content-Type": "application/json" },
 });
 
@@ -33,10 +34,9 @@ const AdminOrders = () => {
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const res = await orderAPI.get('/');
-            // Sắp xếp mới nhất trước ở client
-            const sorted = res.data.sort((a, b) =>
-                new Date(b.createdAt) - new Date(a.createdAt)
+            const res = await orderAPI.get('');
+            const sorted = res.data.data.sort(
+                (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
             );
             setOrders(sorted);
         } catch (err) {
@@ -49,13 +49,17 @@ const AdminOrders = () => {
 
     const handleStatusChange = async (orderId, newStatus) => {
         try {
-            await orderAPI.patch(`/${orderId}`, { status: newStatus });
-            setOrders(prev => prev.map(o =>
-                o.id === orderId ? { ...o, status: newStatus } : o
-            ));
+            const res = await orderAPI.patch(`/${orderId}/status?status=${newStatus}`);
+            alert(res.data?.message || 'Cập nhật trạng thái thành công');
+            setOrders(prev =>
+                prev.map(o =>
+                    o.id === orderId ? { ...o, status: newStatus } : o
+                )
+            );    
         } catch (err) {
             console.error('Lỗi cập nhật trạng thái:', err);
-            alert('Không thể cập nhật trạng thái. Vui lòng thử lại.');
+            const errorMessage = err.response?.data?.message || err.message || 'Không thể cập nhật trạng thái. Vui lòng thử lại.';
+            alert(errorMessage);
         }
     };
 

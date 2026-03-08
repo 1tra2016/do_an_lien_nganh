@@ -29,5 +29,4 @@ public class OrderItem {
     private Integer quantity;
 
     private String imageMain;
-
 }

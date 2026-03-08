@@ -176,6 +176,7 @@ const AdminCoupons = () => {
                             <tr><td colSpan="9" style={{ textAlign: 'center', color: '#999', padding: '30px' }}>Chưa có mã giảm giá</td></tr>
                         ) : coupons.map(c => {
                             const expired = new Date(c.expiryDate) < new Date();
+                            const soldOut = c.usedCount >= c.usageLimit;
                             return (
                                 <tr key={c.id}>
                                     <td><strong style={{ color: '#EE1926' }}>{c.code}</strong></td>
@@ -186,8 +187,8 @@ const AdminCoupons = () => {
                                     <td>{c.usedCount || 0}/{c.usageLimit}</td>
                                     <td>{new Date(c.expiryDate).toLocaleDateString('vi-VN')}</td>
                                     <td>
-                                        <span className={`admin-badge ${expired ? 'cancelled' : 'delivered'}`}>
-                                            {expired ? 'Đã dừng' : 'Hoạt động'}
+                                        <span className={`admin-badge ${expired ? 'cancelled' : soldOut ? 'cancelled' : 'delivered'}`}>
+                                            {expired ? 'Đã dừng' : soldOut ? 'Hết lượt' : 'Còn hiệu lực'}
                                         </span>
                                     </td>
                                     <td>

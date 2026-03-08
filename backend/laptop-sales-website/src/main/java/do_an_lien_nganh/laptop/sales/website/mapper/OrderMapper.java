@@ -15,12 +15,20 @@ public class OrderMapper {
         res.setId(order.getId());
         res.setCustomerName(order.getCustomerName());
         res.setPhone(order.getPhone());
+        res.setAddress(order.getAddress());
 
         res.setPayment(order.getPayment());
         res.setTotalPrice(order.getTotalPrice());
         res.setStatus(order.getStatus());
         res.setCreatedAt(order.getCreatedAt());
 
+        // tính totalItems
+        int totalItems = order.getItems()
+                .stream()
+                .mapToInt(OrderItem::getQuantity)
+                .sum();
+
+        res.setTotalItems(totalItems);
         return res;
     }
 

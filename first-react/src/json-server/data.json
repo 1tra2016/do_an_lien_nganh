@@ -10,6 +10,10 @@
         {
           "id": "2",
           "number": 1
+        },
+        {
+          "id": "13",
+          "number": 1
         }
       ],
       "savedCoupons": [
@@ -73,7 +77,17 @@
       "name": "Trà",
       "numberphone": "012345",
       "email": "12345@gmail.com",
-      "password": "12345"
+      "password": "12345",
+      "cart": [
+        {
+          "id": "6",
+          "number": 1
+        },
+        {
+          "id": "4",
+          "number": 1
+        }
+      ]
     },
     {
       "id": "admin1",
@@ -84,7 +98,15 @@
       "role": "admin",
       "cart": [
         {
+          "id": 10,
+          "number": 1
+        },
+        {
           "id": "4",
+          "number": 1
+        },
+        {
+          "id": "13",
           "number": 1
         }
       ],
@@ -234,7 +256,7 @@
       "originalPrice": 30890000,
       "discountPercent": 18,
       "monthly": 2549000,
-      "remain": 7,
+      "remain": 6,
       "cpu": "Intel Core i5-13500HX",
       "ram": "16GB DDR5 4800MHz",
       "drive": "512GB PCIe NVMe SSD",
@@ -278,7 +300,7 @@
       "originalPrice": 27990000,
       "discountPercent": 30,
       "monthly": 1959000,
-      "remain": 5,
+      "remain": 3,
       "cpu": "Intel Core i7-13620H",
       "ram": "16GB LPDDR5 4800MHz",
       "drive": "1TB PCIe NVMe SSD",
@@ -689,8 +711,9 @@
       "originalPrice": 37380000,
       "couponCode": "B",
       "discount": 40,
-      "status": "pending",
-      "createdAt": "2026-03-07T05:54:03.362Z"
+      "status": "cancelled",
+      "createdAt": "2026-03-07T05:54:03.362Z",
+      "cancelReason": "không thích"
     }
   ],
   "coupons": [

@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-import { userAPI } from "../APIs/APIs";
 import '../css/dangnhap.css'
 import Myheader from "./Myheader";
 import Footer from "./Footer";
+
+
+
 function Dangnhap({ onLogin }) {
 
   const [email, setEmail] = useState("");
@@ -12,43 +15,48 @@ function Dangnhap({ onLogin }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const laptopAPI = axios.create({
+    baseURL: 'http://localhost:8080/api/users',
+    headers: { "Content-Type": "application/json" },
+  });
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+
     try {
-      // json-server v1 không hỗ trợ query filter → lấy tất cả rồi tìm client-side
-      const response = await userAPI.get('/');
-      const users = response.data;
-      const foundUser = users.find(
-        (u) => u.email === email && u.password === password
-      );
+      
+      const res = await laptopAPI.post("/login", {
+        email: email,
+        password: password
+      });
 
-      if (foundUser) {
-        // Lưu cả email, name và role vào localStorage
-        localStorage.setItem("user", JSON.stringify({
-          email: foundUser.email,
-          name: foundUser.name,
-          id: foundUser.id,
-          role: foundUser.role || "user",
-          cart: foundUser.cart || []
-        }));
-        onLogin(foundUser);
+      const user = res.data.data;
 
-        // Admin → redirect đến trang quản trị
-        if (foundUser.role === "admin") {
-          alert("Chào mừng Admin " + foundUser.name);
-          navigate("/admin");
-        } else {
-          alert("Chào mừng trở lại " + foundUser.name);
-          navigate("/");
-        }
+      // lưu user vào localStorage
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (onLogin) onLogin(user);
+
+      if (user.role === "admin") {
+        alert("Chào mừng Admin " + user.name);
+        navigate("/admin");
       } else {
-        setError("Sai thông tin đăng nhập");
+        alert("Chào mừng trở lại " + user.name);
+        navigate("/");
       }
+
     } catch (err) {
-      setError("Lỗi kết nối đến server");
+
+      if (err.response) {
+        setError("Sai thông tin đăng nhập");
+      } else {
+        setError("Lỗi kết nối đến server");
+      }
+
       console.error("Login error:", err);
     }
   };
+
   return (
     <div>
       <Myheader />

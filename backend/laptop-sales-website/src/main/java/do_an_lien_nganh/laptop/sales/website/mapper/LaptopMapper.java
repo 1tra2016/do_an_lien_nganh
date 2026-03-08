@@ -61,7 +61,9 @@ public class LaptopMapper {
 
     public static LaptopResponseShort toLaptopResponseShort(Laptop laptop){
         LaptopResponseShort laptopResponseShort = new LaptopResponseShort();
+
         laptopResponseShort.setName(laptop.getName());
+        laptopResponseShort.setId(laptop.getId());
         laptopResponseShort.setPrice(laptop.getPrice());
         laptopResponseShort.setRemain(laptop.getRemain());
         laptopResponseShort.setImageMain(laptop.getImages().get(0));

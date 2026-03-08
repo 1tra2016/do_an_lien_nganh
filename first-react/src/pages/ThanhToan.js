@@ -7,17 +7,23 @@ import '../css/ThanhToan.css';
 import '../css/MyCoupons.css';
 import Footer from "./Footer";
 
-const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const url = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
 const orderAPI = axios.create({
-    baseURL: url + '/orders',
-    headers: { "Content-Type": "application/json" },
-});
-const couponAPI = axios.create({
-    baseURL: url + '/coupons',
-    headers: { "Content-Type": "application/json" },
+baseURL: url + "/api/orders",
+headers: { "Content-Type": "application/json" }
 });
 
-// Thông tin tài khoản ngân hàng cửa hàng (thay đổi theo thực tế)
+const couponAPI = axios.create({
+    baseURL: url + "/api/users",
+    headers: { "Content-Type": "application/json" }
+});
+
+const cartAPI = axios.create({
+    baseURL: url + "/api/carts",
+});
+
+// Thông tin tài khoản ngân hàng cửa hàng (thay đổi theo thực tế) 
 const BANK_INFO = {
     bankId: "MB",           // Mã ngân hàng (MB Bank)
     accountNo: "0123456789", // Số tài khoản
@@ -25,7 +31,7 @@ const BANK_INFO = {
     template: "compact2"
 };
 
-// Thông tin MoMo cửa hàng
+// Thông tin MoMo cửa hàng 
 const MOMO_INFO = {
     phone: "0123456789",
     name: "LAPTOP PC SHOP"
@@ -50,7 +56,7 @@ const ThanhToan = () => {
         note: "",
         payment: "cod"
     });
-
+ 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
@@ -67,62 +73,55 @@ const ThanhToan = () => {
     }, []);
 
     useEffect(() => {
-        if (user && user.cart && user.cart.length > 0) {
-            loadCartItems(user.cart);
-        } else {
-            setLoading(false);
-        }
+        if (!user) return;
+        loadCart();
     }, [user]);
 
-    const loadCartItems = async (cart) => {
+    const [totalPrice, setTotalPrice] = useState(0);
+    const loadCart = async () => {
         try {
-            const response = await itemAPI.get("/");
-            const allItems = response.data;
-            const merged = cart
-                .map(cartItem => {
-                    const product = allItems.find(p => p.id === cartItem.id);
-                    if (product) return { ...product, quantity: cartItem.number };
-                    return null;
-                })
-                .filter(Boolean);
-            setCartItems(merged);
+            const res = await cartAPI.get(`/${user.id}`);
+            const cart = res.data.data;
+            setCartItems(cart.items || []);
+            setTotalPrice(cart.totalPrice || 0);
         } catch (err) {
-            console.error("Error loading cart:", err);
+            console.error("Load cart error:", err);
         } finally {
             setLoading(false);
         }
     };
-
-    // Load saved coupons
+    // Load coupons user đã lưu  minOrder 
     useEffect(() => {
-        if (user) {
-            const loadCoupons = async () => {
-                try {
-                    const [couponRes, userRes] = await Promise.all([
-                        couponAPI.get('/'),
-                        userAPI.get(`/${user.id}`)
-                    ]);
-                    const savedIds = userRes.data.savedCoupons || [];
-                    const saved = couponRes.data.filter(c => savedIds.includes(c.id));
-                    setMyCoupons(saved);
-                } catch (err) { console.error('Error loading coupons:', err); }
-            };
-            loadCoupons();
-        }
+        if (!user) return;
+        const loadCoupons = async () => {
+            try {
+                const res = await couponAPI.get(`/${user.id}/coupons`);
+                setMyCoupons(res.data.data || []);
+            } catch (err) {
+                console.error("Load user coupons error:", err);
+            }
+        };
+        loadCoupons();
     }, [user]);
 
-    const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-    // Calculate discount when coupon or total changes
+    // tính toán giảm giá khi áp dụng mã giảm giá hoặc khi tổng tiền thay đổi
     useEffect(() => {
-        if (!selectedCoupon) { setDiscount(0); return; }
-        if (totalPrice < selectedCoupon.minOrder) { setDiscount(0); setSelectedCoupon(null); return; }
+        if (!selectedCoupon) {
+            setDiscount(0);
+            return;
+        }
+        if (totalPrice < selectedCoupon.minOrderValue) {
+            setDiscount(0);
+            return;
+        }
         let disc = 0;
-        if (selectedCoupon.type === 'percent') {
-            disc = Math.round(totalPrice * selectedCoupon.value / 100);
-            if (selectedCoupon.maxDiscount && disc > selectedCoupon.maxDiscount) disc = selectedCoupon.maxDiscount;
+        if (selectedCoupon.type === "percent") {
+            disc = Math.round(totalPrice * selectedCoupon.discountValue / 100);
+            if (selectedCoupon.maxDiscount && disc > selectedCoupon.maxDiscount) {
+                disc = selectedCoupon.maxDiscount;
+            }
         } else {
-            disc = selectedCoupon.value;
+            disc = selectedCoupon.discountValue;
         }
         setDiscount(disc);
     }, [selectedCoupon, totalPrice]);
@@ -135,67 +134,30 @@ const ThanhToan = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!formData.name || !formData.phone || !formData.address) {
             alert("Vui lòng điền đầy đủ thông tin giao hàng!");
             return;
         }
-
-        if (cartItems.length === 0) {
-            alert("Giỏ hàng trống!");
-            return;
-        }
-
         setSubmitting(true);
         try {
-            // Create order
-            const order = {
-                userId: user.id,
-                customerName: formData.name,
-                phone: formData.phone,
+            const orderReq = {
+                userName: formData.name,
+                numberPhone: formData.phone,
                 address: formData.address,
-                note: formData.note,
+                note: formData.note || "",
                 payment: formData.payment,
-                items: cartItems.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    image: item.images?.[0] || ""
-                })),
-                totalPrice: finalPrice,
-                originalPrice: totalPrice,
-                couponCode: selectedCoupon ? selectedCoupon.code : null,
-                discount: discount,
-                status: "pending",
-                createdAt: new Date().toISOString()
+                couponCode: selectedCoupon?.code || null
             };
-
-            const orderResponse = await orderAPI.post("/", order);
-            setOrderId(orderResponse.data.id);
-
-            // Update item stock
-            for (const item of cartItems) {
-                const newRemain = Math.max(0, item.remain - item.quantity);
-                await itemAPI.patch(`/${item.id}`, { remain: newRemain });
-            }
-
-            // Update coupon usage
-            if (selectedCoupon) {
-                await couponAPI.patch(`/${selectedCoupon.id}`, {
-                    usedCount: (selectedCoupon.usedCount || 0) + 1
-                });
-            }
-
-            // Clear cart
-            await userAPI.patch(`/${user.id}`, { cart: [] });
-            const updatedUser = { ...user, cart: [] };
-            localStorage.setItem("user", JSON.stringify(updatedUser));
-
+            console.log("ORDER REQUEST:", orderReq);
+            const res = await orderAPI.post(`/${user.id}`, orderReq);
+        
+            console.log("ORDER RESPONSE:", res.data);
+        
+            setOrderId(res.data.data.id);
             setOrderSuccess(true);
         } catch (err) {
-            console.error("Error placing order:", err);
-            alert("Đã xảy ra lỗi khi đặt hàng. Vui lòng thử lại!");
+            console.error("Order error:", err.response?.data || err);
+            alert("Đặt hàng thất bại");
         } finally {
             setSubmitting(false);
         }
@@ -390,7 +352,7 @@ const ThanhToan = () => {
                                 {/* ===== DETAIL PANELS ===== */}
 
                                 {/* Bank Transfer QR */}
-                                {formData.payment === 'bank' && totalPrice > 0 && (
+                                {formData.payment === 'bank' && finalPrice > 0 && (
                                     <div className="tt-qr-section">
                                         <div className="tt-qr-header">
                                             <i className="fas fa-qrcode"></i>
@@ -399,7 +361,7 @@ const ThanhToan = () => {
                                         <div className="tt-qr-body">
                                             <div className="tt-qr-image">
                                                 <img
-                                                    src={`https://img.vietqr.io/image/${BANK_INFO.bankId}-${BANK_INFO.accountNo}-${BANK_INFO.template}.png?amount=${totalPrice}&addInfo=Thanh+toan+don+hang&accountName=${encodeURIComponent(BANK_INFO.accountName)}`}
+                                                    src={`https://img.vietqr.io/image/${BANK_INFO.bankId}-${BANK_INFO.accountNo}-${BANK_INFO.template}.png?amount=${finalPrice}&addInfo=Thanh+toan+don+hang&accountName=${encodeURIComponent(BANK_INFO.accountName)}`}
                                                     alt="QR Chuyển khoản ngân hàng"
                                                 />
                                             </div>
@@ -407,7 +369,7 @@ const ThanhToan = () => {
                                                 <div className="tt-qr-detail"><span>Ngân hàng:</span><strong>MB Bank</strong></div>
                                                 <div className="tt-qr-detail"><span>Số tài khoản:</span><strong>{BANK_INFO.accountNo}</strong></div>
                                                 <div className="tt-qr-detail"><span>Chủ tài khoản:</span><strong>{BANK_INFO.accountName}</strong></div>
-                                                <div className="tt-qr-detail tt-qr-amount"><span>Số tiền:</span><strong>{totalPrice.toLocaleString("vi-VN")}₫</strong></div>
+                                                <div className="tt-qr-detail tt-qr-amount"><span>Số tiền:</span><strong>{(finalPrice || 0).toLocaleString("vi-VN")}₫</strong></div>
                                             </div>
                                             <p className="tt-qr-note"><i className="fas fa-info-circle"></i> Mở ứng dụng ngân hàng và quét mã QR để thanh toán tự động</p>
                                         </div>
@@ -415,7 +377,7 @@ const ThanhToan = () => {
                                 )}
 
                                 {/* MoMo QR */}
-                                {formData.payment === 'momo' && totalPrice > 0 && (
+                                {formData.payment === 'momo' && finalPrice > 0 && (
                                     <div className="tt-qr-section tt-qr-momo">
                                         <div className="tt-qr-header" style={{ background: 'linear-gradient(135deg, #a50064, #d6006e)' }}>
                                             <i className="fas fa-qrcode"></i>
@@ -424,15 +386,15 @@ const ThanhToan = () => {
                                         <div className="tt-qr-body">
                                             <div className="tt-qr-image tt-qr-momo-img">
                                                 <img
-                                                    src={`https://momosv3.apimienphi.com/api/QRCode?phone=${MOMO_INFO.phone}&amount=${totalPrice}&note=${encodeURIComponent('Thanh toan don hang')}`}
+                                                    src={`https://momosv3.apimienphi.com/api/QRCode?phone=${MOMO_INFO.phone}&amount=${finalPrice}&note=${encodeURIComponent('Thanh toan don hang')}`}
                                                     alt="QR MoMo"
-                                                    onError={(e) => { e.target.src = `https://img.vietqr.io/image/MOMO-${MOMO_INFO.phone}-compact2.png?amount=${totalPrice}&addInfo=Thanh+toan+don+hang`; }}
+                                                    onError={(e) => { e.target.src = `https://img.vietqr.io/image/MOMO-${MOMO_INFO.phone}-compact2.png?amount=${finalPrice}&addInfo=Thanh+toan+don+hang`; }}
                                                 />
                                             </div>
                                             <div className="tt-qr-info">
                                                 <div className="tt-qr-detail"><span>Ví MoMo:</span><strong>{MOMO_INFO.phone}</strong></div>
                                                 <div className="tt-qr-detail"><span>Tên:</span><strong>{MOMO_INFO.name}</strong></div>
-                                                <div className="tt-qr-detail tt-qr-amount" style={{ color: '#a50064' }}><span>Số tiền:</span><strong>{totalPrice.toLocaleString("vi-VN")}₫</strong></div>
+                                                <div className="tt-qr-detail tt-qr-amount" style={{ color: '#a50064' }}><span>Số tiền:</span><strong>{finalPrice.toLocaleString("vi-VN")}₫</strong></div>
                                             </div>
                                             <p className="tt-qr-note"><i className="fas fa-info-circle"></i> Mở ứng dụng MoMo → Quét mã QR → Xác nhận thanh toán</p>
                                         </div>
@@ -440,7 +402,7 @@ const ThanhToan = () => {
                                 )}
 
                                 {/* ZaloPay QR */}
-                                {formData.payment === 'zalopay' && totalPrice > 0 && (
+                                {formData.payment === 'zalopay' && finalPrice > 0 && (
                                     <div className="tt-qr-section">
                                         <div className="tt-qr-header" style={{ background: 'linear-gradient(135deg, #0068ff, #004fc4)' }}>
                                             <i className="fas fa-qrcode"></i>
@@ -449,14 +411,14 @@ const ThanhToan = () => {
                                         <div className="tt-qr-body">
                                             <div className="tt-qr-image" style={{ borderColor: '#0068ff', background: '#f0f6ff' }}>
                                                 <img
-                                                    src={`https://img.vietqr.io/image/${BANK_INFO.bankId}-${BANK_INFO.accountNo}-${BANK_INFO.template}.png?amount=${totalPrice}&addInfo=ZaloPay+Thanh+toan&accountName=${encodeURIComponent(BANK_INFO.accountName)}`}
+                                                    src={`https://img.vietqr.io/image/${BANK_INFO.bankId}-${BANK_INFO.accountNo}-${BANK_INFO.template}.png?amount=${finalPrice}&addInfo=ZaloPay+Thanh+toan&accountName=${encodeURIComponent(BANK_INFO.accountName)}`}
                                                     alt="QR ZaloPay"
                                                 />
                                             </div>
                                             <div className="tt-qr-info">
                                                 <div className="tt-qr-detail"><span>Ví ZaloPay:</span><strong>{MOMO_INFO.phone}</strong></div>
                                                 <div className="tt-qr-detail"><span>Tên:</span><strong>{MOMO_INFO.name}</strong></div>
-                                                <div className="tt-qr-detail tt-qr-amount" style={{ color: '#0068ff' }}><span>Số tiền:</span><strong>{totalPrice.toLocaleString("vi-VN")}₫</strong></div>
+                                                <div className="tt-qr-detail tt-qr-amount" style={{ color: '#0068ff' }}><span>Số tiền:</span><strong>{finalPrice.toLocaleString("vi-VN")}₫</strong></div>
                                             </div>
                                             <p className="tt-qr-note"><i className="fas fa-info-circle"></i> Mở ứng dụng ZaloPay → Quét mã QR → Xác nhận thanh toán</p>
                                         </div>
@@ -464,7 +426,7 @@ const ThanhToan = () => {
                                 )}
 
                                 {/* VNPAY QR */}
-                                {formData.payment === 'vnpay' && totalPrice > 0 && (
+                                {formData.payment === 'vnpay' && finalPrice > 0 && (
                                     <div className="tt-qr-section">
                                         <div className="tt-qr-header" style={{ background: 'linear-gradient(135deg, #e21b1b, #b71515)' }}>
                                             <i className="fas fa-qrcode"></i>
@@ -473,13 +435,13 @@ const ThanhToan = () => {
                                         <div className="tt-qr-body">
                                             <div className="tt-qr-image" style={{ borderColor: '#e21b1b', background: '#fff5f5' }}>
                                                 <img
-                                                    src={`https://img.vietqr.io/image/${BANK_INFO.bankId}-${BANK_INFO.accountNo}-${BANK_INFO.template}.png?amount=${totalPrice}&addInfo=VNPAY+Thanh+toan&accountName=${encodeURIComponent(BANK_INFO.accountName)}`}
+                                                    src={`https://img.vietqr.io/image/${BANK_INFO.bankId}-${BANK_INFO.accountNo}-${BANK_INFO.template}.png?amount=${finalPrice}&addInfo=VNPAY+Thanh+toan&accountName=${encodeURIComponent(BANK_INFO.accountName)}`}
                                                     alt="QR VNPAY"
                                                 />
                                             </div>
                                             <div className="tt-qr-info">
                                                 <div className="tt-qr-detail"><span>Cổng thanh toán:</span><strong>VNPAY</strong></div>
-                                                <div className="tt-qr-detail tt-qr-amount"><span>Số tiền:</span><strong>{totalPrice.toLocaleString("vi-VN")}₫</strong></div>
+                                                <div className="tt-qr-detail tt-qr-amount"><span>Số tiền:</span><strong>{finalPrice.toLocaleString("vi-VN")}₫</strong></div>
                                             </div>
                                             <p className="tt-qr-note"><i className="fas fa-info-circle"></i> Mở ứng dụng ngân hàng hỗ trợ VNPAY → Quét mã QR → Xác nhận</p>
                                         </div>
@@ -577,20 +539,20 @@ const ThanhToan = () => {
                             </div>
                         </div>
 
-                        {/* Order Summary */}
+                        {/* Order Summary  */}
                         <div className="thanhtoan-right">
                             <div className="tt-order-summary">
                                 <h2>Đơn hàng ({cartItems.length} sản phẩm)</h2>
                                 <div className="tt-order-items">
                                     {cartItems.map(item => (
-                                        <div key={item.id} className="tt-order-item">
+                                        <div key={item.laptopId} className="tt-order-item">
                                             <div className="tt-item-img-wrap">
-                                                <img src={item.images?.[0]} alt={item.name} />
+                                                <img src={item.imageMain} alt={item.laptopName} />
                                                 <span className="tt-item-qty">{item.quantity}</span>
                                             </div>
                                             <div className="tt-item-info">
-                                                <p className="tt-item-name">{item.name}</p>
-                                                <p className="tt-item-price">{(item.price * item.quantity).toLocaleString("vi-VN")}₫</p>
+                                                <p className="tt-item-name">{item.laptopName}</p>
+                                                <p className="tt-item-price">{(item.subtotal || 0).toLocaleString("vi-VN")}₫</p>
                                             </div>
                                         </div>
                                     ))}
@@ -604,10 +566,10 @@ const ThanhToan = () => {
                                         <p className="tt-coupon-empty">Chưa lưu mã giảm giá. <a href="/KhuyenMai" style={{ color: '#EE1926' }}>Lấy mã</a></p>
                                     ) : (
                                         <div className="tt-coupon-list">
-                                            {myCoupons.map(c => {
+                                            {myCoupons.map(c => { 
                                                 const expired = new Date(c.expiryDate) < new Date();
                                                 const soldOut = c.usedCount >= c.usageLimit;
-                                                const notEnough = totalPrice < c.minOrder;
+                                                const notEnough = totalPrice < c.minOrderValue;
                                                 const disabled = expired || soldOut || notEnough;
                                                 const isSelected = selectedCoupon?.id === c.id;
                                                 return (
@@ -615,14 +577,14 @@ const ThanhToan = () => {
                                                         onClick={() => { if (!disabled) setSelectedCoupon(isSelected ? null : c); }}>
                                                         <input type="radio" checked={isSelected} readOnly disabled={disabled} />
                                                         <span className={`tt-coupon-badge ${c.type}`}>
-                                                            {c.type === 'percent' ? `-${c.value}%` : `-${(c.value / 1000).toFixed(0)}K`}
+                                                            {c.type === 'percent' ? `-${c.discountValue}%` : `-${(c.discountValue / 1000).toFixed(0)}K`}
                                                         </span>
                                                         <div className="tt-coupon-info">
                                                             <strong>{c.code}</strong>
                                                             <span>
-                                                                {disabled
-                                                                    ? (expired ? 'Hết hạn' : soldOut ? 'Hết lượt' : `Đơn tối thiểu ${c.minOrder.toLocaleString('vi-VN')}₫`)
-                                                                    : `Đơn từ ${c.minOrder.toLocaleString('vi-VN')}₫`
+                                                                {disabled 
+                                                                    ? (expired ? 'Hết hạn' : soldOut ? 'Hết lượt' : `Đơn tối thiểu ${c.minOrderValue.toLocaleString('vi-VN')}₫`)
+                                                                    : `Đơn từ ${c.minOrderValue.toLocaleString('vi-VN')}₫`
                                                                 }
                                                             </span>
                                                         </div>
@@ -656,7 +618,7 @@ const ThanhToan = () => {
                                 <div className="tt-summary-divider"></div>
                                 <div className="tt-summary-row tt-summary-total">
                                     <span>Tổng cộng:</span>
-                                    <span className="tt-total-price">{finalPrice.toLocaleString("vi-VN")}₫</span>
+                                    <span className="tt-total-price">{(finalPrice || 0).toLocaleString("vi-VN")}₫</span>
                                 </div>
                                 <button
                                     onClick={handleSubmit}

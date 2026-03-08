@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { itemAPI, userAPI } from '../../APIs/APIs';
+import axios from 'axios';
+import { userAPI } from '../../APIs/APIs';
+
+const laptopAPI = axios.create({
+    baseURL: 'http://localhost:8080/api/laptops',
+    headers: { "Content-Type": "application/json" },
+});
 
 const ProductSection = () => {
     const [items, setItems] = useState([]);
@@ -10,10 +16,8 @@ const ProductSection = () => {
 
     const fetchItems = async () => {
         try {
-            const response = await itemAPI.get("/");
-            // Lấy ngẫu nhiên 4 sản phẩm
-            const shuffled = response.data.sort(() => 0.5 - Math.random()).slice(0, 4);
-            setItems(shuffled);
+            const response = await laptopAPI.get("/recommend");
+            setItems(response.data.data || response.data);
         } catch (err) {
             console.error("Error fetching items:", err);
         }
@@ -46,7 +50,7 @@ const ProductSection = () => {
             // Giảm tồn kho
             const itemData = items.find(i => i.id === itemId);
             if (itemData && itemData.remain > 0) {
-                await itemAPI.patch(`/${itemId}`, { remain: itemData.remain - 1 });
+                await laptopAPI.patch(`/${itemId}`, { remain: itemData.remain - 1 });
             }
 
             // Cập nhật localStorage

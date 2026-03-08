@@ -2,12 +2,16 @@ package do_an_lien_nganh.laptop.sales.website.service.Impl;
 
 import do_an_lien_nganh.laptop.sales.website.dto.laptop.LaptopRequest;
 import do_an_lien_nganh.laptop.sales.website.dto.laptop.LaptopResponseDetail;
+import do_an_lien_nganh.laptop.sales.website.dto.laptop.LaptopResponseShort;
 import do_an_lien_nganh.laptop.sales.website.entity.Laptop;
 import do_an_lien_nganh.laptop.sales.website.exception.ResourceNotFoundException;
 import do_an_lien_nganh.laptop.sales.website.mapper.LaptopMapper;
 import do_an_lien_nganh.laptop.sales.website.repository.LaptopRepository;
 import do_an_lien_nganh.laptop.sales.website.service.LaptopService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -19,12 +23,24 @@ public class LaptopServiceImpl implements LaptopService {
 
     private final LaptopRepository laptopRepository;
 
-    @Override
-     // Lấy danh sách Laptop với bộ lọc đa lớp
-    public List<Laptop> getFilteredLaptops(String brand, Long minPrice, Long maxPrice, String sortField, String sortDir) {
+    @Override //sử dụng Specification để áp dụng bộ lọc đa dụng
+    public Page<LaptopResponseShort> getFilteredLaptops(
+            String keyword,
+            int page,
+            int size,
+            String brand,
+            Long minPrice,
+            Long maxPrice,
+            String sortField,
+            String sortDir
+    ) {
 
-        // Khởi tạo bộ lọc động
         Specification<Laptop> spec = (root, query, cb) -> cb.conjunction();
+
+        if (keyword != null && !keyword.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("name")), "%" + keyword.toLowerCase() + "%"));
+        }
 
         // 1. Lọc theo hãng
         if (brand != null && !brand.isEmpty()) {
@@ -34,16 +50,27 @@ public class LaptopServiceImpl implements LaptopService {
 
         // 2. Lọc theo khoảng giá
         if (minPrice != null) {
-            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("price"), minPrice));
         }
+
         if (maxPrice != null) {
-            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("price"), maxPrice));
         }
 
-        // 3. Xử lý sắp xếp (Tên A-Z, Z-A hoặc Giá tăng/giảm)
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortField);
+        // 3. Sort
+        Sort sort = Sort.by(
+                sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortField
+        );
 
-        return laptopRepository.findAll(spec, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Laptop> laptopPage = laptopRepository.findAll(spec, pageable);
+
+        // 4. Convert sang DTO
+        return laptopPage.map(LaptopMapper::toLaptopResponseShort);
     }
 
     @Override
@@ -75,5 +102,10 @@ public class LaptopServiceImpl implements LaptopService {
 
         if(laptop.getRemain() < quantity)
             throw new ResourceNotFoundException("Not enough stock");
+    }
+
+    @Override
+    public List<Laptop> get4RecommendedLaptops() {
+        return laptopRepository.get4RandomLaptops();
     }
 }

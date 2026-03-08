@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { itemAPI, userAPI } from '../../APIs/APIs';
+import Recommend4Laptops from './Recommend4Laptops';
+
+const laptopAPI = axios.create({
+    baseURL: 'http://localhost:8080/api/laptops',
+    headers: { "Content-Type": "application/json" },
+});
 
 const SuggestionSection = () => {
     const [items, setItems] = useState([]);
@@ -15,10 +22,8 @@ const SuggestionSection = () => {
 
     const fetchItems = async () => {
         try {
-            const response = await itemAPI.get("/");
-            // Lấy ngẫu nhiên 4 sản phẩm
-            const shuffled = response.data.sort(() => 0.5 - Math.random()).slice(0, 4);
-            setItems(shuffled);
+            const response = await laptopAPI.get("/recommend");
+            setItems(response.data.data || response.data);
         } catch (err) {
             console.error("Error fetching items:", err);
         }
@@ -96,50 +101,7 @@ const SuggestionSection = () => {
                     </a>
                 </div>
             </div>
-            <div className="binhtong6">
-                {items.map((item) => (
-                    <div className="box1binhtong6" key={item.id}>
-                        <a href={`/ChitietSanpham/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <div className="binhcuoi1">
-                                <img
-                                    alt={item.name}
-                                    src={item.images?.[0]}
-                                    style={{ width: '100%', height: '200px', objectFit: 'contain' }}
-                                />
-                            </div>
-                        </a>
-                        <div className="txtbinhcuoi1">
-                            <a href={`/ChitietSanpham/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                <div className="txt1boxbinhtong2-1">
-                                    {item.name}
-                                </div>
-                                <div className="boxbinhdanhgia">
-                                    {[1, 2, 3, 4, 5].map(i => (
-                                        <div key={i}>
-                                            <i className="fa-regular fa-star" />
-                                        </div>
-                                    ))}
-                                    <div className="txtboxbinhdanhgia">0 đánh giá</div>
-                                </div>
-                                <div className="boxbinhgia">
-                                    <div className="boxbinhgia1">
-                                        <div className="txt1boxbinhgia1">
-                                            {item.price.toLocaleString("vi-VN")}₫
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                            <div
-                                className="binhtuychon2"
-                                onClick={(e) => addToCart(e, item.id)}
-                                style={{ cursor: 'pointer' }}
-                            >
-                                <div className="txtbinhtuychon2">Thêm vào giỏ</div>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <Recommend4Laptops/>
         </div>
     );
 };

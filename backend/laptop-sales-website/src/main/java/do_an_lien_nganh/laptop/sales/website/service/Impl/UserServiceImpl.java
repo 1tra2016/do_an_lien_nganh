@@ -1,9 +1,12 @@
 package do_an_lien_nganh.laptop.sales.website.service.Impl;
 
+import do_an_lien_nganh.laptop.sales.website.dto.coupon.CouponResponse;
 import do_an_lien_nganh.laptop.sales.website.dto.user.*;
 import do_an_lien_nganh.laptop.sales.website.entity.Cart;
 import do_an_lien_nganh.laptop.sales.website.entity.CartItem;
+import do_an_lien_nganh.laptop.sales.website.entity.Coupon;
 import do_an_lien_nganh.laptop.sales.website.entity.User;
+import do_an_lien_nganh.laptop.sales.website.mapper.CouponMapper;
 import do_an_lien_nganh.laptop.sales.website.mapper.UserMapper;
 import do_an_lien_nganh.laptop.sales.website.repository.UserRepository;
 import do_an_lien_nganh.laptop.sales.website.service.CartService;
@@ -18,8 +21,15 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
     private final CartService cartService;
+    private final UserMapper userMapper;
+    private final CouponMapper couponMapper;
+    private final CouponServiceImpl couponServiceImpl;
+
+    @Override
+    public User getById(Long id){
+        return userRepository.getById(id);
+    }
 
     @Override
     public UserResponse createUser(UserCreateRequest request) {
@@ -89,5 +99,38 @@ public class UserServiceImpl implements UserService {
             totalItems += item.getQuantity();
         }
         return totalItems;
+    }
+
+    @Override
+    public List<CouponResponse> getUserCoupons(Long userId){
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return user.getSavedCoupons()
+                .stream()
+                .map(CouponMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public void saveCoupon(Long userId, Long couponId){
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Coupon coupon = couponServiceImpl.getCoupon(couponId);
+
+        boolean exists = user.getSavedCoupons()
+                .stream()
+                .anyMatch(c -> c.getId().equals(couponId));
+
+        if(exists){
+            throw new RuntimeException("Coupon already saved");
+        }
+
+        user.getSavedCoupons().add(coupon);
+
+        userRepository.save(user);
     }
 }

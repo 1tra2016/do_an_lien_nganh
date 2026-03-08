@@ -17,8 +17,9 @@ public class CartMapper {
         res.setLaptopId(item.getLaptop().getId());
         res.setLaptopName(item.getLaptop().getName());
         res.setPrice(item.getLaptop().getPrice());
+        res.setRemain(item.getLaptop().getRemain());
         res.setQuantity(item.getQuantity());
-
+        res.setImageMain( item.getLaptop().getImages().get(0) );
         res.setSubtotal(item.getLaptop().getPrice() * item.getQuantity());
 
         return res;
@@ -40,7 +41,9 @@ public class CartMapper {
                 .mapToLong(CartItemResponse::getSubtotal)
                 .sum();
 
+
         res.setTotalPrice(totalPrice);
+
         res.setUpdatedAt(cart.getUpdatedAt());
 
         return res;

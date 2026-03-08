@@ -3,7 +3,9 @@ package do_an_lien_nganh.laptop.sales.website.mapper;
 import do_an_lien_nganh.laptop.sales.website.dto.coupon.CouponRequest;
 import do_an_lien_nganh.laptop.sales.website.dto.coupon.CouponResponse;
 import do_an_lien_nganh.laptop.sales.website.entity.Coupon;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CouponMapper {
 
     public static Coupon toEntity(CouponRequest req){

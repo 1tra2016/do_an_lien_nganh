@@ -1,123 +1,117 @@
-import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { userAPI, itemAPI } from "../APIs/APIs";
-import Myheader from "./Myheader";
 import '../css/Giohang.css';
+import Myheader from "./Myheader";
 import Footer from "./Footer";
 
+import axios from "axios";
+import { useEffect, useState } from "react";    
+
+// ✅ đưa axios ra ngoài component
+const cartAPI = axios.create({
+  baseURL: "http://localhost:8080/api/carts"
+});
+
 const Giohang = () => {
+
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+
     const navigate = useNavigate();
 
-    // Load user from localStorage
     useEffect(() => {
+
+      const fetchCart = async () => {
+
         const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        } else {
-            setLoading(false);
+
+        // ✅ nếu chưa login
+        if (!storedUser) {
+          setLoading(false);
+          navigate("/login");
+          return;
         }
+
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        try {
+          const response = await cartAPI.get(`/${parsedUser.id}`);
+          const cart = response.data.data;
+          setCartItems(cart.items || []);
+        } catch (err) {
+          console.error("Lỗi load cart:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchCart();
     }, []);
 
-    // Load cart items with full product info
-    useEffect(() => {
-        if (user && user.cart && user.cart.length > 0) {
-            loadCartItems(user.cart);
-        } else {
-            setCartItems([]);
-            setLoading(false);
-        }
-    }, [user]);
-
-    const loadCartItems = async (cart) => {
-        try {
-            setLoading(true);
-            const response = await itemAPI.get("/");
-            const allItems = response.data;
-
-            const merged = cart
-                .map(cartItem => {
-                    const product = allItems.find(p => p.id === cartItem.id);
-                    if (product) {
-                        return {
-                            ...product,
-                            quantity: cartItem.number
-                        };
-                    }
-                    return null;
-                })
-                .filter(Boolean);
-
-            setCartItems(merged);
-        } catch (err) {
-            console.error("Error loading cart items:", err);
-        } finally {
-            setLoading(false);
-        }
+    const reloadCart = async () => {
+      try {
+        const response = await cartAPI.get(`/${user.id}`);
+        const cart = response.data.data;
+        setCartItems(cart.items || []);
+      } catch (err) {
+         console.error("Reload cart error:", err);
+      }
     };
 
-    // Update cart on server and localStorage
-    const updateCart = async (newCartItems) => {
-        if (!user) return;
-        setUpdating(true);
-        try {
-            const cartData = newCartItems.map(item => ({
-                id: item.id,
-                number: item.quantity
-            }));
-
-            await userAPI.patch(`/${user.id}`, { cart: cartData });
-
-            const updatedUser = { ...user, cart: cartData };
-            setUser(updatedUser);
-            localStorage.setItem("user", JSON.stringify(updatedUser));
-            setCartItems(newCartItems);
-        } catch (err) {
-            console.error("Error updating cart:", err);
-            alert("Lỗi khi cập nhật giỏ hàng!");
-        } finally {
-            setUpdating(false);
-        }
+    // ✅ tăng số lượng
+    const increaseQuantity = async (laptopId) => {
+      try {
+        await cartAPI.patch(`/${user.id}/${laptopId}?delta=1`);
+        reloadCart(); // reload lại giỏ hàng
+      } catch (err) {
+        console.error(err);
+      }
     };
 
-    const increaseQuantity = (itemId) => {
-        const item = cartItems.find(i => i.id === itemId);
-        if (item && item.quantity >= item.remain) {
-            alert("Số lượng đã đạt giới hạn tồn kho!");
-            return;
-        }
-        const updated = cartItems.map(item =>
-            item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
-        );
-        updateCart(updated);
+    // ✅ giảm số lượng
+    const decreaseQuantity = async (laptopId) => {
+      try {
+        await cartAPI.patch(`/${user.id}/${laptopId}?delta=-1`);
+        reloadCart();
+      } catch (err) {
+        console.error(err);
+      }
     };
 
-    const decreaseQuantity = (itemId) => {
-        const updated = cartItems.map(item =>
-            item.id === itemId ? { ...item, quantity: Math.max(1, item.quantity - 1) } : item
-        );
-        updateCart(updated);
+    // ✅ xóa sản phẩm
+    const removeItem = async (laptopId) => {
+      if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
+      try {
+        await cartAPI.delete(`/${user.id}/${laptopId}`);
+        reloadCart(); // load lại giỏ hàng
+      } catch (err) {
+        console.error("Error removing:", err);
+      }
     };
 
-    const removeItem = (itemId) => {
-        if (window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) {
-            const updated = cartItems.filter(item => item.id !== itemId);
-            updateCart(updated);
-        }
-    };
+    // ✅ tính tổng tiền
+    const totalPrice = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
 
-    const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    // ✅ tổng số sản phẩm
+    const totalItems = cartItems.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
 
     const handleCheckout = () => {
+
         if (cartItems.length === 0) {
+
             alert("Giỏ hàng trống!");
             return;
+
         }
+
         navigate("/ThanhToan");
+
     };
 
     return (
@@ -162,14 +156,14 @@ const Giohang = () => {
                                     <div className="gh-col-product gh-product-info">
                                         <a href={`/ChitietSanpham/${item.id}`}>
                                             <img
-                                                src={item.images?.[0]}
-                                                alt={item.name}
+                                                src={item.imageMain}
+                                                alt={item.laptopName}
                                                 className="gh-product-img"
                                             />
                                         </a>
                                         <div className="gh-product-detail">
                                             <a href={`/ChitietSanpham/${item.id}`} className="gh-product-name">
-                                                {item.name}
+                                                {item.laptopName}
                                             </a>
                                             <p className="gh-product-remain">Còn {item.remain} sản phẩm</p>
                                         </div>
@@ -180,13 +174,13 @@ const Giohang = () => {
                                     <div className="gh-col-qty">
                                         <div className="gh-qty-controls">
                                             <button
-                                                onClick={() => decreaseQuantity(item.id)}
+                                                onClick={() => decreaseQuantity(item.laptopId)}
                                                 disabled={updating || item.quantity <= 1}
                                                 className="gh-qty-btn"
                                             >−</button>
                                             <span className="gh-qty-value">{item.quantity}</span>
                                             <button
-                                                onClick={() => increaseQuantity(item.id)}
+                                                onClick={() => increaseQuantity(item.laptopId)}
                                                 disabled={updating}
                                                 className="gh-qty-btn"
                                             >+</button>
@@ -199,7 +193,7 @@ const Giohang = () => {
                                     </div>
                                     <div className="gh-col-action">
                                         <button
-                                            onClick={() => removeItem(item.id)}
+                                            onClick={() => removeItem(item.laptopId)}
                                             disabled={updating}
                                             className="gh-remove-btn"
                                             title="Xóa sản phẩm"

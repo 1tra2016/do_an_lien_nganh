@@ -1,14 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import Myheader from "./Myheader"
-import '../css/DanhmucSanpham.css'
-import Footer from "./Footer"
-import ItemList from "./ItemList"
+import axios from "axios";
+
+import Myheader from "./Myheader";
+import Footer from "./Footer";
+
+import "../css/DanhmucSanpham.css";
+
+const API_URL = "http://localhost:8080/api/laptops";
+
 const DanhmucSanpham = () => {
+
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
+
   const searchQuery = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category") || "";
+
+  const [items, setItems] = useState([]);
+
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const [sapxep, setSapxep] = useState(null);
   const [giathap, setGiathap] = useState(null);
@@ -20,6 +32,7 @@ const DanhmucSanpham = () => {
     setGiathap(thap);
     setGiacao(cao);
     setpk(pk);
+    setPage(0);
   };
 
   const brands = [
@@ -28,24 +41,86 @@ const DanhmucSanpham = () => {
     { label: "HP", value: "hp" },
     { label: "Lenovo", value: "lenovo" },
     { label: "MSI", value: "msi" },
-    { label: "Apple", value: "macbook" },
+    { label: "Apple", value: "apple" },
     { label: "Dell", value: "dell" },
-    { label: "Acer", value: "acer" },
+    { label: "Acer", value: "acer" }
   ];
 
+  const fetchItems = async () => {
+
+    try {
+
+      let sortField = "id";
+      let sortDir = "asc";
+
+      if (sapxep === "giatang") {
+        sortField = "price";
+        sortDir = "asc";
+      }
+
+      if (sapxep === "giagiam") {
+        sortField = "price";
+        sortDir = "desc";
+      }
+
+      if (sapxep === "tenAZ") {
+        sortField = "name";
+        sortDir = "asc";
+      }
+
+      if (sapxep === "tenZA") {
+        sortField = "name";
+        sortDir = "desc";
+      }
+
+      const response = await axios.get(API_URL, {
+        params: {
+          page: page,
+          size: 12,
+          brand: brand,
+          minPrice: giathap,
+          maxPrice: giacao === Infinity ? null : giacao,
+          sortField: sortField,
+          sortDir: sortDir
+        }
+      });
+
+      const data = response.data.data;
+
+      setItems(data.content);
+      setTotalPages(data.totalPages);
+
+    } catch (err) {
+
+      console.error("Error fetching laptops:", err);
+
+    }
+
+  };
+
+  useEffect(() => {
+
+    fetchItems();
+
+  }, [page, brand, giathap, giacao, sapxep]);
+
   return (
+
     <div>
+
       <Myheader />
+
       <div className="khungmainsp">
+
         <div className="mainsp">
+
           {searchQuery && (
-            <div style={{ padding: '10px 20px', fontSize: '16px', color: '#333' }}>
-              <i className="fas fa-search" style={{ marginRight: '8px', color: '#1a73e8' }}></i>
+            <div style={{ padding: "10px 20px", fontSize: "16px" }}>
               Kết quả tìm kiếm cho: <strong>"{searchQuery}"</strong>
             </div>
           )}
 
-          {/* Lọc theo thương hiệu */}
+          {/* Filter brand */}
           <div className="locphankhuc">
             <div className="textlpk"><i className="fas fa-tag"></i> Thương hiệu:</div>
             {brands.map((b) => (
@@ -117,13 +192,71 @@ const DanhmucSanpham = () => {
             </div>
           )}
 
-          <div>
-            <ItemList rows={0} sapxep={sapxep} giathap={giathap} giacao={giacao} category={categoryParam} search={searchQuery} brand={brand} />
+          {/* LIST */}
+          <ul className="laptop-list">
+
+            {items.map((item) => (
+
+              <li key={item.id} className="sptt">
+
+                <a href={`/ChitietSanpham/${item.id}`}>
+
+                  <div className="img">
+                    <img src={item.imageMain} alt={item.name} />
+                  </div>
+
+                  <div className="title">
+
+                    <h4>{item.name}</h4>
+
+                    <p>{item.price.toLocaleString("vi-VN")}₫</p>
+
+                  </div>
+
+                </a>
+
+              </li>
+
+            ))}
+          </ul>
+
+          {/* Pagination */}
+
+          <div className="pagination">
+
+            {Array.from({ length: totalPages }).map((_, i) => (
+
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                className={page === i ? "active" : ""}
+                style={{
+        padding: "10px 18px",
+        fontSize: "16px",
+        minWidth: "44px",
+        margin: "4px",
+        borderRadius: "6px",
+        cursor: "pointer"
+      }}
+
+              >
+                {i + 1}
+              </button>
+
+            ))}
+
           </div>
+
         </div>
+
       </div>
+
       <Footer />
+
     </div>
+
   );
+
 };
+
 export default DanhmucSanpham;

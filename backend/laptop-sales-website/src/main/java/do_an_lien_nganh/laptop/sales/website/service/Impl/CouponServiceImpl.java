@@ -7,6 +7,7 @@ import do_an_lien_nganh.laptop.sales.website.enums.CouponType;
 import do_an_lien_nganh.laptop.sales.website.exception.ResourceNotFoundException;
 import do_an_lien_nganh.laptop.sales.website.mapper.CouponMapper;
 import do_an_lien_nganh.laptop.sales.website.repository.CouponRepository;
+import do_an_lien_nganh.laptop.sales.website.service.CouponService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,11 @@ import java.util.List;
 @Service
 @Transactional
 @AllArgsConstructor
-public class CouponServiceImpl {
+public class CouponServiceImpl implements CouponService {
 
     private final CouponRepository couponRepository;
+
+    @Override
     public Coupon validateCoupon(String code, long orderTotal){
 
         Coupon coupon = couponRepository.getCouponsByCode(code);
@@ -39,6 +42,7 @@ public class CouponServiceImpl {
         return coupon;
     }
 
+    @Override
     public long calculateDiscount(Coupon coupon, long total){
 
         if(coupon.getType() == CouponType.percent){
@@ -55,6 +59,7 @@ public class CouponServiceImpl {
         return coupon.getDiscountValue();
     }
 
+    @Override
     public CouponResponse createCoupon(CouponRequest request){
 
         Coupon coupon = CouponMapper.toEntity(request);
@@ -64,6 +69,7 @@ public class CouponServiceImpl {
         return CouponMapper.toResponse(coupon);
     }
 
+    @Override
     public CouponResponse updateCoupon(Long id, CouponRequest request){
 
         Coupon coupon = couponRepository.findById(id)
@@ -73,29 +79,37 @@ public class CouponServiceImpl {
 
         return CouponMapper.toResponse(coupon);
     }
-    public void deleteCoupon(Long id){
-        Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mã giảm giá"));
+    @Override
+    public void deleteCoupon(Long id) {
 
-        couponRepository.delete(coupon);
+        // xóa các coupon user đã lưu trước
+        couponRepository.deleteSavedCouponsByCouponId(id);
+        //rồi mới xóa coupon được
+        couponRepository.deleteById(id);
     }
 
-    public CouponResponse getCoupon(Long id){
+    @Override
+    public CouponResponse getResponseCoupon(Long id){
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mã giảm giá"));
 
         return CouponMapper.toResponse(coupon);
     }
 
+    @Override
+    public Coupon getCoupon(Long id){
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mã giảm giá"));
+
+        return coupon;
+    }
+
+    @Override
     public List<CouponResponse> getAllCoupons(){
         return couponRepository.findAll()
                 .stream()
                 .map(CouponMapper::toResponse)
                 .toList();
-    }
-
-    public void usingCoupon(Coupon coupon){
-        coupon.setUsedCount(coupon.getUsedCount()+1);
     }
 
 }

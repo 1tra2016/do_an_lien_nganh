@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { itemAPI } from '../../APIs/APIs';
+import axios from 'axios';
+
+const laptopAPI = axios.create({
+    baseURL: 'http://localhost:8080/api/laptops',
+    headers: { "Content-Type": "application/json" },
+});
 
 const emptyProduct = {
     name: '', price: '', remain: '',
@@ -15,22 +20,43 @@ const AdminProducts = () => {
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ ...emptyProduct });
     const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(0);
+    const [keyword, setKeyword] = useState('');
+    const [totalPages, setTotalPages] = useState(1);
+    const pageSize = 10;
 
-    const fetchItems = async () => {
-        setLoading(true);
-        try {
-            const res = await itemAPI.get('/');
-            setItems(res.data);
-        } catch (err) {
-            console.error('Lỗi tải sản phẩm:', err);
-        }
-        setLoading(false);
-    };
+    const fetchItems = async (currentPage = page) => {
+    setLoading(true);
+    try {
+        const res = await laptopAPI.get('', {
+            params: {
+                page: currentPage,
+                size: pageSize,
+                keyword: keyword
+            }
+        });
 
-    useEffect(() => { fetchItems(); }, []);
+        const pageData = res.data.data;
+
+        setItems(pageData.content || []);
+        setTotalPages(pageData.totalPages || 1);
+
+    } catch (err) {
+        console.error('Lỗi tải sản phẩm:', err);
+    }
+    setLoading(false);
+};
+
+    useEffect(() => {fetchItems(page);}, [page, keyword]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        setPage(0);
+        setKeyword(searchTerm);
     };
 
     const handleImageChange = (index, value) => {
@@ -54,26 +80,34 @@ const AdminProducts = () => {
         setShowForm(true);
     };
 
-    const openEditForm = (item) => {
-        setEditingId(item.id);
+    const openEditForm = async (item) => {
+    try {
+        const res = await laptopAPI.get(`/${item.id}`);
+        const data = res.data.data;
+
+        setEditingId(data.id);
         setFormData({
-            name: item.name || '',
-            price: item.price || '',
-            remain: item.remain || '',
-            cpu: item.cpu || '',
-            ram: item.ram || '',
-            drive: item.drive || '',
-            card: item.card || '',
-            screen: item.screen || '',
-            camera: item.camera || '',
-            port: item.port || '',
-            weight: item.weight || '',
-            pin: item.pin || '',
-            system: item.system || '',
-            images: item.images?.length > 0 ? [...item.images] : ['']
+            name: data.name || '',
+            price: data.price || '',
+            remain: data.remain || '',
+            cpu: data.cpu || '',
+            ram: data.ram || '',
+            drive: data.drive || '',
+            card: data.card || '',
+            screen: data.screen || '',
+            camera: data.camera || '',
+            port: data.port || '',
+            weight: data.weight || '',
+            pin: data.pin || '',
+            system: data.system || '',
+            images: data.images?.length ? [...data.images] : ['']
         });
+
         setShowForm(true);
-    };
+    } catch (err) {
+        console.error("Lỗi tải chi tiết:", err);
+    }
+};
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -92,10 +126,10 @@ const AdminProducts = () => {
 
         try {
             if (editingId) {
-                await itemAPI.patch(`/${editingId}`, payload);
+                await laptopAPI.patch(`/${editingId}`, payload);
                 alert('Cập nhật sản phẩm thành công!');
             } else {
-                await itemAPI.post('/', payload);
+                await laptopAPI.post('', payload);
                 alert('Thêm sản phẩm thành công!');
             }
             setShowForm(false);
@@ -109,18 +143,14 @@ const AdminProducts = () => {
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Bạn có chắc muốn xóa "${name}"?`)) return;
         try {
-            await itemAPI.delete(`/${id}`);
+            await laptopAPI.delete(`/${id}`);
             alert('Đã xóa sản phẩm!');
             fetchItems();
         } catch (err) {
             console.error('Lỗi xóa:', err);
             alert('Không thể xóa sản phẩm.');
         }
-    };
-
-    const filtered = searchTerm
-        ? items.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))
-        : items;
+    };  
 
     if (loading) {
         return (
@@ -140,16 +170,34 @@ const AdminProducts = () => {
 
             <div className="admin-table-card">
                 <div className="admin-table-header">
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <input
                             type="text"
                             placeholder="🔍 Tìm sản phẩm..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ padding: '8px 14px', border: '1.5px solid #ddd', borderRadius: '8px', fontSize: '14px', width: '250px', outline: 'none' }}
+                            style={{
+                                padding: '8px 14px',
+                                border: '1.5px solid #ddd',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                width: '250px',
+                                outline: 'none'
+                            }}
                         />
-                        <span style={{ fontSize: '13px', color: '#888' }}>{filtered.length} sản phẩm</span>
-                    </div>
+
+                        <button
+                            type="submit"
+                            style={{
+                                padding: '8px 14px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: '#667eea',
+                                color: '#fff',
+                                cursor: 'pointer'
+                            }}
+                        >Tìm kiếm</button>
+                    </form>
                     <button className="admin-add-btn" onClick={openAddForm}>
                         <i className="fas fa-plus" style={{ marginRight: '6px' }}></i>Thêm sản phẩm
                     </button>
@@ -166,10 +214,10 @@ const AdminProducts = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filtered.map(item => (
+                        {items.map( item => (
                             <tr key={item.id}>
                                 <td>
-                                    <img src={item.images?.[0]} alt={item.name} />
+                                    <img src={item.imageMain} alt={item.name} />
                                 </td>
                                 <td style={{ maxWidth: '300px' }}>
                                     <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -190,6 +238,25 @@ const AdminProducts = () => {
                         ))}
                     </tbody>
                 </table>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', gap: '6px' }}>
+    {Array.from({ length: totalPages }).map((_, i) => (
+        <button
+            key={i}
+            onClick={() => setPage(i)}
+            style={{
+                padding: '8px 14px',
+                fontSize: '14px',
+                borderRadius: '6px',
+                border: '1px solid #ddd',
+                background: page === i ? '#667eea' : '#fff',
+                color: page === i ? '#fff' : '#333',
+                cursor: 'pointer'
+            }}
+        >
+            {i + 1}
+        </button>
+    ))}
+</div>
             </div>
 
             {/* Modal Form */}
@@ -305,7 +372,9 @@ const AdminProducts = () => {
                             </div>
                         </form>
                     </div>
+                    
                 </div>
+                
             )}
         </div>
     );

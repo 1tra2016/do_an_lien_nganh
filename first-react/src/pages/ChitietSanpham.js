@@ -1,16 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { userAPI, itemAPI } from "../APIs/APIs";
+import axios from "axios";
+import { userAPI } from "../APIs/APIs";
 import Myheader from "./Myheader"
 import '../css/ChitietSanpham.css';
 import Footer from "./Footer"
 import ItemList from "./ItemList";
 
+const laptopAPI = axios.create({
+    baseURL: 'http://localhost:8080/api/laptops',
+    headers: { "Content-Type": "application/json" },
+});
+
 function ChitietSanpham() {
-  const [item, setItem] = useState([]);
+  const [item, setItem] = useState(null);
   const [bigimg, setBigimg] = useState(null);
   const { id } = useParams(); // Lấy ID từ URL
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [newReviewText, setNewReviewText] = useState("");
   const [reviews, setReviews] = useState([
@@ -22,9 +29,8 @@ function ChitietSanpham() {
 
   const fetchItems = async () => {
     try {
-      const response = await itemAPI.get(`/${id}`);
-      setItem(response.data);
-
+      const response = await laptopAPI.get(`/${id}`);
+      setItem(response.data.data || response.data);
     } catch (error) {
       console.error("Error fetching item:", error);
     }
@@ -49,50 +55,42 @@ function ChitietSanpham() {
   }, []);
 
   const mua = async (e) => {
-    e.preventDefault(); // Ngăn reload trang
+    e.preventDefault();
+
     if (!user) {
       alert("Bạn chưa đăng nhập! Vui lòng đăng nhập để mua hàng.");
       return;
     }
+
     if (item.remain <= 0) {
       alert("Sản phẩm đã hết hàng!");
       return;
     }
+
     try {
-      // Bước 1: Lấy dữ liệu user hiện tại
-      const response = await userAPI.get(`/${user.id}`);
-      const currentCart = response.data.cart || [];
 
-      // Bước 2: Kiểm tra sản phẩm đã tồn tại chưa
-      const itemIndex = currentCart.findIndex(cartItem => cartItem.id === id);
+      setLoading(true);
 
-      if (itemIndex !== -1) {
-        currentCart[itemIndex].number += 1;
-      } else {
-        currentCart.push({ id, number: 1 });
-      }
+      await axios.post(
+        `http://localhost:8080/api/carts/${user.id}/${item.id}`
+      );
 
-      // Bước 3: Cập nhật giỏ hàng trên server
-      await userAPI.patch(`/${user.id}`, { cart: currentCart });
+      setLoading(false); 
 
-      // Bước 4: Cập nhật số lượng tồn kho
-      const remain = item.remain - 1;
-      await itemAPI.patch(`/${item.id}`, { remain: remain });
-
-      // Bước 5: Cập nhật localStorage để header sidebar cập nhật
-      const updatedUser = { ...user, cart: currentCart };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      // thông báo cho header reload cart
       window.dispatchEvent(new Event("cartUpdated"));
 
-      alert("✅ Thêm vào giỏ hàng thành công!");
-      fetchItems();
+      alert("✅ Đã thêm sản phẩm vào giỏ hàng!");
+
     } catch (error) {
-      console.error("Lỗi khi thêm vào giỏ hàng:", error.response?.data || error.message);
-      alert("Đã xảy ra lỗi khi thêm vào giỏ hàng!");
+
+      console.error("Lỗi khi thêm vào giỏ:", error.response?.data || error.message);
+
+      alert("❌ Không thể thêm sản phẩm vào giỏ hàng!");
+
     }
   };
-
+  
   const handleSubmitReview = () => {
     if (!newReviewText.trim()) {
       alert("Vui lòng nhập nội dung đánh giá!");
@@ -107,6 +105,18 @@ function ChitietSanpham() {
     setNewReviewText("");
     alert("Cảm ơn bạn đã gửi đánh giá tuyệt vời!");
   };
+
+  if (!item) {
+  return (
+    <div>
+      <Myheader />
+      <p>Đang tải sản phẩm...</p>
+      <div style={{ height: "100vh" }}></div> {/* Giữ chỗ cho layout */}
+      <Footer />
+    </div>
+  );
+}
+else
   return (
     <div className="body">
       <Myheader />
@@ -261,7 +271,7 @@ function ChitietSanpham() {
                   </tr>
                   <tr>
                     <th>Pin</th>
-                    <td>{item.weight}</td>
+                    <td>{item.pin}</td>
                   </tr>
                   <tr>
                     <th>Hệ điều hành</th>

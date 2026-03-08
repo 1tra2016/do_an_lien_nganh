@@ -9,8 +9,8 @@ const AdminUsers = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const res = await userAPI.get('/');
-                setUsers(res.data);
+                const res = await userAPI.get('');
+                setUsers(res.data.data);
             } catch (err) {
                 console.error('Lỗi tải danh sách tài khoản:', err);
             }
@@ -35,7 +35,7 @@ const AdminUsers = () => {
         ? users.filter(u =>
             u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            u.numberphone?.includes(searchTerm)
+            u.numberPhone?.includes(searchTerm)
         )
         : users;
 
@@ -99,13 +99,13 @@ const AdminUsers = () => {
                                     </div>
                                 </td>
                                 <td>{user.email}</td>
-                                <td>{user.numberphone}</td>
+                                <td>{user.numberPhone}</td>
                                 <td>
                                     <span className={`admin-badge ${user.role === 'admin' ? 'cancelled' : 'delivered'}`}>
                                         {user.role === 'admin' ? 'Admin' : 'Khách hàng'}
                                     </span>
                                 </td>
-                                <td>{user.cart?.length || 0} sản phẩm</td>
+                                <td>{user.totalItems || 0} sản phẩm</td>
                                 <td>
                                     {user.role !== 'admin' && (
                                         <button className="admin-action-btn delete" onClick={() => handleDelete(user.id, user.name)}>

@@ -25,7 +25,7 @@ const KhuyenMai = () => {
         if (stored) {
             const u = JSON.parse(stored);
             setUser(u);
-            setSavedIds(u.savedCoupons || []);
+            fetchUserCoupons(u.id);
         }
         fetchCoupons();
     }, []);
@@ -33,7 +33,7 @@ const KhuyenMai = () => {
     const fetchCoupons = async () => {
         try {
             const res = await couponAPI.get('');
-            setCoupons((res.data.data || res.data).filter(c => !new Date(c.expiryDate) < new Date()));
+            setCoupons((res.data.data || res.data).filter(c => new Date(c.expiryDate) > new Date()));
         } catch (err) {
             console.error('Error fetching coupons:', err);
         }
@@ -45,24 +45,26 @@ const KhuyenMai = () => {
             return;
         }
         if (savedIds.includes(couponId)) return;
-
         setSaving(couponId);
         try {
-            const userRes = await userAPI.get(`/${user.id}`);
-            const current = userRes.data.savedCoupons || [];
-            if (!current.includes(couponId)) {
-                const updated = [...current, couponId];
-                await userAPI.patch(`/${user.id}`, { savedCoupons: updated });
-                const updatedUser = { ...user, savedCoupons: updated };
-                localStorage.setItem('user', JSON.stringify(updatedUser));
-                setUser(updatedUser);
-                setSavedIds(updated);
-            }
+            await axios.post(`${url}/api/users/${user.id}/coupons/${couponId}`);
+            // cập nhật UI ngay
+            setSavedIds(prev => [...prev, couponId]);
         } catch (err) {
             console.error('Error saving coupon:', err);
-            alert('Lỗi lưu mã!');
+            alert('Lưu mã thất bại!');
         }
         setSaving(null);
+    };
+
+    const fetchUserCoupons = async (userId) => {
+        try {
+            const res = await axios.get(`${url}/api/users/${userId}/coupons`);
+            const list = res.data.data || [];
+            setSavedIds(list.map(c => c.id));
+        } catch (err) {
+            console.error("Load user coupons error:", err);    
+        }
     };
 
     const isExpired = (date) => new Date(date) < new Date();

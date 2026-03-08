@@ -14,7 +14,7 @@ import HomeBanner from '../components/home/HomeBanner';
 import SpecialOffers from '../components/home/SpecialOffers';
 import CategoryGrid from '../components/home/CategoryGrid';
 import FlashSale from '../components/home/FlashSale';
-import ProductSection from '../components/home/ProductSection';
+import Recommend4Laptops from '../components/home/Recommend4Laptops';
 import MarketingSection from '../components/home/MarketingSection';
 import SuggestionSection from '../components/home/SuggestionSection';
 import FullPageSection from '../components/home/FullPageSection';
@@ -38,13 +38,15 @@ const Home = () => {
       <div className="binhtongcabai">
         <div className="binhtong">
           <FlashSale />
-          <ProductSection />
+          <div className ="binhtong2">
+            <Recommend4Laptops /> {/* quảng cáo */}
+            </div>
         </div>
         <MarketingSection />
-        <SuggestionSection />
+        <SuggestionSection /> {/* quảng cáo */}
       </div>
-      <FullPageSection />
-      <BottomSection />
+      <FullPageSection />{/* quảng cáo */}
+      <BottomSection /> 
       <Footer />
     </div>
   );

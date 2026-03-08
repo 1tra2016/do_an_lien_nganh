@@ -45,7 +45,7 @@ public class CouponController {
     // Lấy 1 coupon
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<CouponResponse>> getCoupon(@PathVariable Long id){
-        CouponResponse response = couponServiceImpl.getCoupon(id);
+        CouponResponse response = couponServiceImpl.getResponseCoupon(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

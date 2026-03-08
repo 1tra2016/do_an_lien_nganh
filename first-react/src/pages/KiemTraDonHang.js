@@ -7,7 +7,7 @@ import axios from 'axios';
 const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const orderAPI = axios.create({
-    baseURL: url + '/orders',
+    baseURL: url + '/api/orders',
     headers: { "Content-Type": "application/json" },
 });
 
@@ -34,7 +34,8 @@ const KiemTraDonHang = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedOrder, setExpandedOrder] = useState(null);
-
+    const [orderDetails, setOrderDetails] = useState({});
+    
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
@@ -51,41 +52,38 @@ const KiemTraDonHang = () => {
     }, [user]);
 
     const loadOrders = async () => {
-        try {
-            setLoading(true);
-            // Fetch all orders and filter client-side (json-server has strict type matching)
-            const response = await orderAPI.get("/");
-            const userOrders = response.data
-                .filter(order => String(order.userId) === String(user.id))
-                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            setOrders(userOrders);
-        } catch (err) {
-            console.error("Error loading orders:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+        setLoading(true);
+        const response = await orderAPI.get(`/user/${user.id}`);
+
+        const userOrders = response.data.data.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        setOrders(userOrders);
+    } catch (err) {
+        console.error("Error loading orders:", err);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleCancelOrder = async (orderId, e) => {
         e.stopPropagation();
         const reason = window.prompt("Vui lòng nhập lý do hủy đơn hàng:");
-        if (reason === null) return; // User cancelled the prompt
+        if (reason === null) return;
         if (reason.trim() === "") {
-            alert("Bạn cần phải nhập lý do để hủy đơn hàng!");
+            alert("Bạn cần nhập lý do hủy đơn!");
             return;
         }
-
         if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
             try {
-                await orderAPI.patch(`/${orderId}`, {
-                    status: 'cancelled',
-                    cancelReason: reason
-                });
+                await orderAPI.patch(`/${orderId}?reason=${encodeURIComponent(reason)}`);
                 alert("Đã hủy đơn hàng thành công!");
-                loadOrders(); // Refresh list
+                loadOrders();        
             } catch (err) {
                 console.error("Lỗi khi hủy đơn hàng:", err);
-                alert("Đã xảy ra lỗi khi hủy đơn hàng, vui lòng thử lại sau.");
+                alert("Đã xảy ra lỗi khi hủy đơn hàng!");
             }
         }
     };
@@ -106,14 +104,28 @@ const KiemTraDonHang = () => {
         return STATUS_MAP[status] || { label: status, color: '#666', icon: 'fas fa-question-circle' };
     };
 
-    const toggleOrder = (orderId) => {
-        setExpandedOrder(expandedOrder === orderId ? null : orderId);
+    const toggleOrder = async (orderId) => {
+        if (expandedOrder === orderId) {
+            setExpandedOrder(null);
+            return;
+        }
+        try {
+            const res = await orderAPI.get(`/${orderId}/detail`);
+            setOrderDetails(prev => ({
+                ...prev,
+                [orderId]: res.data.data
+            }));
+            setExpandedOrder(orderId);
+        } catch (err) {
+            console.error("Lỗi load chi tiết đơn:", err);
+        }
     };
 
     const renderOrderCard = (order) => {
         const statusInfo = getStatusInfo(order.status);
         const paymentInfo = getPaymentInfo(order.payment);
         const isExpanded = expandedOrder === order.id;
+        const detail = orderDetails[order.id];
 
         return (
             <div key={order.id} className={`ktdh-order-card ${isExpanded ? 'expanded' : ''}`}>
@@ -141,7 +153,7 @@ const KiemTraDonHang = () => {
                 <div className="ktdh-order-quick">
                     <div className="ktdh-quick-item">
                         <span className="ktdh-quick-label">Sản phẩm:</span>
-                        <span>{order.items?.length || 0} sản phẩm</span>
+                        <span>{order.totalItems || 0} sản phẩm</span>
                     </div>
                     <div className="ktdh-quick-item">
                         <span className="ktdh-quick-label">Thanh toán:</span>
@@ -174,7 +186,7 @@ const KiemTraDonHang = () => {
                         <div className="ktdh-detail-section">
                             <h4><i className="fas fa-box"></i> Chi tiết sản phẩm</h4>
                             <div className="ktdh-items-list">
-                                {order.items?.map((item, index) => (
+                                {detail?.items?.map((item, index) => (
                                     <div key={index} className="ktdh-item-row">
                                         <img src={item.image} alt={item.name} className="ktdh-item-img" />
                                         <div className="ktdh-item-info">

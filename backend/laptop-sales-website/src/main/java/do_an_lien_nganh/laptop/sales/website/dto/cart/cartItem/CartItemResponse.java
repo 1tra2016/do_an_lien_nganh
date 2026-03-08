@@ -12,8 +12,11 @@ public class CartItemResponse {
     private String laptopName;
 
     private Long price;
+    private Integer remain;
 
     private Integer quantity;
+
+    private String imageMain;
 
     private Long subtotal; //logic quantity * price được thiết lập trong mapper, ở đây chỉ ghi thuộc tính
 
