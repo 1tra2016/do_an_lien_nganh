@@ -4,7 +4,7 @@ import Footer from './Footer';
 import '../css/KiemTraDonHang.css';
 import axios from 'axios';
 
-const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const url = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 const orderAPI = axios.create({
     baseURL: url + '/api/orders',
