@@ -64,7 +64,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse updateInfor(Long id, UserInfor request) {
+    public UserInfor updateInfor(Long id, UserInfor request) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
 
         User saved = userRepository.save(user);
 
-        return userMapper.toUserResponse(saved);
+        return userMapper.toUserInfor(saved);
     }
 
     @Override

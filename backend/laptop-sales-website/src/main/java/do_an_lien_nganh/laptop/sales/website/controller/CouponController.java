@@ -4,7 +4,7 @@ import do_an_lien_nganh.laptop.sales.website.dto.ApiResponse;
 import do_an_lien_nganh.laptop.sales.website.dto.coupon.CouponRequest;
 import do_an_lien_nganh.laptop.sales.website.dto.coupon.CouponResponse;
 import do_an_lien_nganh.laptop.sales.website.entity.Coupon;
-import do_an_lien_nganh.laptop.sales.website.service.Impl.CouponServiceImpl;
+import do_an_lien_nganh.laptop.sales.website.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,12 +17,12 @@ import java.util.List;
 @CrossOrigin(origins = "*") // Cho phép React gọi API từ domain khác
 public class CouponController {
 
-    private final CouponServiceImpl couponServiceImpl;
+    private final CouponService couponService;
 
     // Tạo mã giảm giá
     @PostMapping
     public ResponseEntity<ApiResponse<CouponResponse>> createCoupon(@RequestBody CouponRequest request){
-        CouponResponse response = couponServiceImpl.createCoupon(request);
+        CouponResponse response = couponService.createCoupon(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -32,27 +32,27 @@ public class CouponController {
             @PathVariable Long id,
             @RequestBody CouponRequest request){
 
-        return ResponseEntity.ok(ApiResponse.success(couponServiceImpl.updateCoupon(id, request)));
+        return ResponseEntity.ok(ApiResponse.success(couponService.updateCoupon(id, request)));
     }
 
     // Xóa mã giảm giá
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteCoupon(@PathVariable Long id){
-        couponServiceImpl.deleteCoupon(id);
+        couponService.deleteCoupon(id);
         return ResponseEntity.ok(ApiResponse.success("ok"));
     }
 
     // Lấy 1 coupon
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<CouponResponse>> getCoupon(@PathVariable Long id){
-        CouponResponse response = couponServiceImpl.getResponseCoupon(id);
+        CouponResponse response = couponService.getResponseCoupon(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // Lấy tất cả coupon
     @GetMapping
     public ResponseEntity<ApiResponse<List<CouponResponse>>> getAllCoupons(){
-        return ResponseEntity.ok(ApiResponse.success(couponServiceImpl.getAllCoupons()));
+        return ResponseEntity.ok(ApiResponse.success(couponService.getAllCoupons()));
     }
 
 
@@ -62,8 +62,8 @@ public class CouponController {
             @RequestParam String code,
             @RequestParam long orderTotal){
 
-        Coupon coupon = couponServiceImpl.validateCoupon(code, orderTotal);
-        long discount = couponServiceImpl.calculateDiscount(coupon, orderTotal);
+        Coupon coupon = couponService.validateCoupon(code, orderTotal);
+        long discount = couponService.calculateDiscount(coupon, orderTotal);
 
         return ResponseEntity.ok(ApiResponse.success(discount));
     }

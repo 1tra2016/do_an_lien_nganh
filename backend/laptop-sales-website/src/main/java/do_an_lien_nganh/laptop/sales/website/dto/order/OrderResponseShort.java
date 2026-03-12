@@ -4,7 +4,7 @@ import do_an_lien_nganh.laptop.sales.website.enums.OrderPayment;
 import do_an_lien_nganh.laptop.sales.website.enums.OrderStatus;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 public class OrderResponseShort {
@@ -17,7 +17,7 @@ public class OrderResponseShort {
     private OrderPayment payment;
     private OrderStatus status;
 
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     private Integer totalItems;
 }

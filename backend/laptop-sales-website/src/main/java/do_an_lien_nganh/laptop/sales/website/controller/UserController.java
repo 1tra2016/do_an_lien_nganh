@@ -34,11 +34,11 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserResponse>> updateInfor(
+    public ResponseEntity<ApiResponse<UserInfor>> updateInfor(
             @PathVariable Long id,
             @RequestBody UserInfor request
     ) {
-        UserResponse response = userService.updateInfor(id, request);
+        UserInfor response = userService.updateInfor(id, request);
         return ResponseEntity.ok(ApiResponse.success( "Cập nhật user thành công", response));
     }
 

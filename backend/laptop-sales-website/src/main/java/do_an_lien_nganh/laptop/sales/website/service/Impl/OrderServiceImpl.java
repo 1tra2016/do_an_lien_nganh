@@ -7,12 +7,13 @@ import do_an_lien_nganh.laptop.sales.website.entity.*;
 import do_an_lien_nganh.laptop.sales.website.enums.OrderStatus;
 import do_an_lien_nganh.laptop.sales.website.mapper.OrderMapper;
 import do_an_lien_nganh.laptop.sales.website.repository.OrderRepository;
+import do_an_lien_nganh.laptop.sales.website.repository.LaptopRepository;
 import do_an_lien_nganh.laptop.sales.website.service.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,8 +26,10 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final CartService cartService;
     private final LaptopService laptopService;
+    private final LaptopRepository laptopRepository;
     private final UserService userService;
     private final CouponService couponService;
+
 
     @Override
     public List<OrderResponseShort> getAllOrders() {
@@ -67,6 +70,14 @@ public class OrderServiceImpl implements OrderService {
     public void cancelOrder(Long orderId, String reason){
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if(order.getStatus() == OrderStatus.cancelled) throw new RuntimeException("Order already cancelled");
+
+        for(OrderItem item : order.getItems()){
+                Laptop laptop = laptopService.getLaptopById(item.getLaptopId());
+                laptop.setRemain(laptop.getRemain() + item.getQuantity());
+                laptopRepository.save(laptop);
+            }
 
         order.setStatus(OrderStatus.cancelled);
         order.setCancelReason(reason);
@@ -158,7 +169,7 @@ public class OrderServiceImpl implements OrderService {
         order.setNote(req.getNote());
         order.setPayment(req.getPayment());
         order.setStatus(OrderStatus.pending);
-        order.setCreatedAt(LocalDate.now());
+        order.setCreatedAt(LocalDateTime.now());
         return order;
     }
 

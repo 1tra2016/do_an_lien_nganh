@@ -61,7 +61,7 @@ public class UserMapper {
         return user;
     }
 
-    public UserInfor  toUserInfor(User user) {
+    public UserInfor toUserInfor(User user) {
         UserInfor userInfor = new UserInfor();
         userInfor.setEmail(user.getEmail());
         userInfor.setName(user.getName());

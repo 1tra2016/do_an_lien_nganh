@@ -12,7 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -27,7 +27,7 @@ public class CouponServiceImpl implements CouponService {
 
         Coupon coupon = couponRepository.getCouponsByCode(code);
 
-        if(coupon.getExpiryDate().isBefore(LocalDate.now())){
+        if(coupon.getExpiryDate().isBefore(LocalDateTime.now())){
             throw new ResourceNotFoundException("Phiếu giảm giá đã hết hạn");
         }
 

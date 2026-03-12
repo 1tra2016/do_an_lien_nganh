@@ -35,18 +35,18 @@ public class OrderController {
     }
 
     // Lấy thông tin đơn hàng dạng short
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<OrderResponseShort>> getOrderShort(@PathVariable Long id) {
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<OrderResponseShort>> getOrderShort(@PathVariable Long userId) {
         return ResponseEntity.ok(
-                ApiResponse.success(orderService.getOrderShort(id))
+                ApiResponse.success(orderService.getOrderShort(userId))
         );
     }
 
     // Lấy chi tiết đơn hàng
-    @GetMapping("/{id}/detail")
-    public ResponseEntity<ApiResponse<OrderResponseDetail>> getOrderDetail(@PathVariable Long id) {
+    @GetMapping("/{userId}/detail")
+    public ResponseEntity<ApiResponse<OrderResponseDetail>> getOrderDetail(@PathVariable Long userId) {
         return ResponseEntity.ok(
-                ApiResponse.success(orderService.getOrderDetail(id))
+                ApiResponse.success(orderService.getOrderDetail(userId))
         );
     }
 
@@ -62,23 +62,23 @@ public class OrderController {
     }
 
     // đổi trạng thái order sang hủy + lí do
-    @PatchMapping("/{id}")
+    @PatchMapping("/{userId}")
     public ResponseEntity<ApiResponse<String>> cancelOrder(
-            @PathVariable Long id,
+            @PathVariable Long userId,
             @RequestParam String reason
     ) {
-        orderService.cancelOrder(id, reason);
+        orderService.cancelOrder(userId, reason);
         return ResponseEntity.ok(
                 ApiResponse.success("Đã hủy thành công")
         );
     }
 
-    @PatchMapping("/{id}/status")
+    @PatchMapping("/{userId}/status")
     public void updateStatus(
-            @PathVariable Long id,
+            @PathVariable Long userId,
             @RequestParam String status
     ){
-        orderService.updateStatus(id, status);
+        orderService.updateStatus(userId, status);
     }
 
 }

@@ -3,7 +3,7 @@ package do_an_lien_nganh.laptop.sales.website.dto.coupon;
 import do_an_lien_nganh.laptop.sales.website.enums.CouponType;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 @Data
 public class CouponRequest {
     private String code;
@@ -13,5 +13,5 @@ public class CouponRequest {
     private Long maxDiscount;
     private Integer usageLimit;
     private Integer usedCount;
-    private LocalDate expiryDate;
+    private LocalDateTime expiryDate;
 }

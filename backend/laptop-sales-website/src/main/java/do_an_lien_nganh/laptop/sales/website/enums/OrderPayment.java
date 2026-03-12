@@ -9,3 +9,4 @@ public enum OrderPayment {
     credit_card,
     atm
 }
+

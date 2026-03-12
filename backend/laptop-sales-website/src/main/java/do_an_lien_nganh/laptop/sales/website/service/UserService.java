@@ -13,7 +13,7 @@ public interface UserService {
 
     UserLoginResponse login(UserLoginRequest request);
 
-    UserResponse updateInfor(Long id, UserInfor request);
+    UserInfor updateInfor(Long id, UserInfor request);
 
     UserInfor getUser(Long id);
     List<UserResponse> getAllUsers();

@@ -96,7 +96,7 @@ public class DashboardServiceImpl implements DashboardService {
         Map<String, Long> orderCountMap =
                 orders.stream()
                         .collect(Collectors.groupingBy(
-                                o -> o.getCreatedAt().atStartOfDay().toLocalDate().toString(),
+                                o -> o.getCreatedAt().toLocalDate().toString(),
                                 Collectors.counting()
                         ));
 
