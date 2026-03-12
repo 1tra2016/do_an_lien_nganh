@@ -118,6 +118,7 @@ public class OrderServiceImpl implements OrderService {
         Cart cart = cartService.getById(userId);
         if (cart.getItems().isEmpty()) throw new RuntimeException("Cart trống");
 
+        validateStock(cart);
         //tạo order và orderItem
         Order order = createBaseOrder(req);
         order.setUser(userService.getById(userId));
@@ -136,6 +137,15 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
         cart.getItems().clear();
         return OrderMapper.toDetailResponse(order);
+    }
+
+    private void validateStock(Cart cart){
+        for(CartItem cartItem : cart.getItems()){
+            Laptop laptop = laptopService.getLaptopById(cartItem.getLaptop().getId());
+
+            if(laptop.getRemain() < cartItem.getQuantity())
+                throw new RuntimeException(laptop.getName() + " không đủ hàng");
+        }
     }
 
     private Order createBaseOrder(OrderRequest req){

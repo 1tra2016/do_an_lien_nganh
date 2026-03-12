@@ -335,7 +335,7 @@ const AdminProducts = () => {
                                 <input type="text" name="system" value={formData.system} onChange={handleChange} placeholder="VD: Windows 11" />
                             </div>
 
-                            {/* Images */}
+                            {/* Images setSearchParams */}
                             <div className="admin-form-group">
                                 <label>Hình ảnh (URL)</label>
                                 {formData.images.map((img, idx) => (

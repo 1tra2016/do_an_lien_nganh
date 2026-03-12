@@ -1,7 +1,7 @@
 import './../css/header.css';
 import './../css/responsive.css';
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 import CartSidebar from "../components/CartSidebar";
@@ -10,6 +10,7 @@ function Myheader() {
   const cartAPI = axios.create({ baseURL: "http://localhost:8080/api/carts", });
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
@@ -69,7 +70,7 @@ function Myheader() {
           <div className='main-header'>
             <div className="top-header">
               <div className="left-top-header">
-                <form onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) navigate(`/DanhmucSanpham?search=${encodeURIComponent(searchQuery.trim())}`); }}>
+                <form onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) navigate(`/DanhmucSanpham?keyword=${encodeURIComponent(searchQuery.trim())}`); }}>
                   <input type="text" placeholder="Tìm kiếm sản phẩm..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}></input>
                   <button type="submit"><i className="fas fa-search"></i> Tìm</button>
                 </form>

@@ -8,12 +8,15 @@ import do_an_lien_nganh.laptop.sales.website.entity.Coupon;
 import do_an_lien_nganh.laptop.sales.website.entity.User;
 import do_an_lien_nganh.laptop.sales.website.mapper.CouponMapper;
 import do_an_lien_nganh.laptop.sales.website.mapper.UserMapper;
+import do_an_lien_nganh.laptop.sales.website.repository.CartRepository;
 import do_an_lien_nganh.laptop.sales.website.repository.UserRepository;
 import do_an_lien_nganh.laptop.sales.website.service.CartService;
 import do_an_lien_nganh.laptop.sales.website.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -25,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final CouponMapper couponMapper;
     private final CouponServiceImpl couponServiceImpl;
+    private final CartRepository cartRepository;
 
     @Override
     public User getById(Long id){
@@ -36,6 +40,10 @@ public class UserServiceImpl implements UserService {
 
         User user = userMapper.toUser(request);
 
+        Cart cart = new Cart();
+        cart.setUser(user);
+        cart.setUpdatedAt(LocalDateTime.now());
+        cartRepository.save(cart);
         User savedUser = userRepository.save(user);
 
         return userMapper.toUserResponse(savedUser);

@@ -9,7 +9,7 @@ export const userAPI = axios.create({
   },
 });
 export const itemAPI = axios.create({
-  baseURL: url + '/items',
+  baseURL: url + '/api/laptops',
   headers: {
     "Content-Type": "application/json",
   },

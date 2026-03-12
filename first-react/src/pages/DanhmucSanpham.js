@@ -14,7 +14,7 @@ const DanhmucSanpham = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
 
-  const searchQuery = searchParams.get("search") || "";
+  const keyword = searchParams.get("keyword") || "";
   const categoryParam = searchParams.get("category") || "";
 
   const [items, setItems] = useState([]);
@@ -75,6 +75,7 @@ const DanhmucSanpham = () => {
 
       const response = await axios.get(API_URL, {
         params: {
+          keyword: keyword,
           page: page,
           size: 12,
           brand: brand,
@@ -102,7 +103,7 @@ const DanhmucSanpham = () => {
 
     fetchItems();
 
-  }, [page, brand, giathap, giacao, sapxep]);
+  }, [keyword, page, brand, giathap, giacao, sapxep]);
 
   return (
 
@@ -114,9 +115,9 @@ const DanhmucSanpham = () => {
 
         <div className="mainsp">
 
-          {searchQuery && (
+          {keyword && (
             <div style={{ padding: "10px 20px", fontSize: "16px" }}>
-              Kết quả tìm kiếm cho: <strong>"{searchQuery}"</strong>
+              Kết quả tìm kiếm cho: <strong>"{keyword}"</strong>
             </div>
           )}
 
