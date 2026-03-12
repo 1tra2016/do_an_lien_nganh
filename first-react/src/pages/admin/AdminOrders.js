@@ -50,7 +50,10 @@ const AdminOrders = () => {
     const handleStatusChange = async (orderId, newStatus) => {
         try {
             const res = await orderAPI.patch(`/${orderId}/status?status=${newStatus}`);
-            alert(res.data?.message || 'Cập nhật trạng thái thành công');
+            // ⚠️ CHỈ alert nếu backend có message 
+            if (res.data?.message) {
+                alert(res.data.message);
+            }
             setOrders(prev =>
                 prev.map(o =>
                     o.id === orderId ? { ...o, status: newStatus } : o
@@ -164,7 +167,7 @@ const AdminOrders = () => {
                                     <td className="price-text">{order.totalPrice?.toLocaleString('vi-VN')}₫</td>
                                     <td>
                                         <select
-                                            className="admin-status-select"
+                                            className={`admin-status-select status-${order.status || 'pending'}`}   // ⭐ thêm class theo status
                                             value={order.status || 'pending'}
                                             onChange={(e) => handleStatusChange(order.id, e.target.value)}
                                         >
