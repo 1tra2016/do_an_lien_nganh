@@ -6,8 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class TopProduct {
-
     private String name;
     private long sold;
-
+    private long revenue;
 }

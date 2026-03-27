@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { userAPI, itemAPI } from "../APIs/APIs";
+import { userAPI, itemAPI, userCouponAPI } from "../APIs/APIs";
 import axios from "axios";
 import Myheader from "./Myheader";
 import '../css/ThanhToan.css';
@@ -14,14 +14,12 @@ baseURL: url + "/api/orders",
 headers: { "Content-Type": "application/json" }
 });
 
-const couponAPI = axios.create({
-    baseURL: url + "/api/users",
-    headers: { "Content-Type": "application/json" }
-});
-
 const cartAPI = axios.create({
     baseURL: url + "/api/carts",
 });
+
+// API tỉnh/thành phố Việt Nam
+const PROVINCES_API = "https://provinces.open-api.vn/api/";
 
 // Thông tin tài khoản ngân hàng cửa hàng (thay đổi theo thực tế) 
 const BANK_INFO = {
@@ -31,7 +29,7 @@ const BANK_INFO = {
     template: "compact2"
 };
 
-// Thông tin MoMo cửa hàng 
+// Thông tin MoMo cửa hàng
 const MOMO_INFO = {
     phone: "0123456789",
     name: "LAPTOP PC SHOP"
@@ -51,22 +49,94 @@ const ThanhToan = () => {
 
     const [formData, setFormData] = useState({
         name: "",
-        phone: "",
-        address: "",
+        numberPhone: "",
+        addressDetail: "", 
+        province: "",
+        district: "",
         note: "",
         payment: "cod"
     });
+
+    // State cho dropdown tỉnh/thành phố
+    const [provinces, setProvinces] = useState([]);
+    const [districts, setDistricts] = useState([]);
+    const [loadingProvinces, setLoadingProvinces] = useState(false);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+
+    //Load tỉnh
+    useEffect(() => {
+        const loadProvinces = async () => {
+            try {
+                setLoadingProvinces(true);
+                const res = await axios.get("https://provinces.open-api.vn/api/p/");
+                setProvinces(res.data);
+            } catch (err) {
+                console.error("Lỗi load tỉnh:", err);
+            } finally {
+                setLoadingProvinces(false);
+            }
+        };
+
+        loadProvinces();
+    }, []);
+
+    //Load xã sau khi chọn tỉnh selectedProvince 
+    useEffect(() => {
+        if (!formData.province) {
+            setDistricts([]);
+            return;
+        }
+
+        const loadDistricts = async () => {
+            try {
+                setLoadingDistricts(true);
+                const res = await axios.get(
+                    `https://provinces.open-api.vn/api/p/${formData.province}?depth=2`
+                );
+                setDistricts(res.data.districts || []);
+            } catch (err) {
+                console.error("Lỗi load huyện:", err);
+            } finally {
+                setLoadingDistricts(false);
+            }
+        };
+ 
+        loadDistricts();
+    }, [formData.province]);
  
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
             const u = JSON.parse(storedUser);
             setUser(u);
-            setFormData(prev => ({
-                ...prev,
-                name: u.name || "",
-                phone: u.numberphone || ""
-            }));
+            // Gọi API để lấy thông tin đầy đủ của user
+            const loadUserDetails = async () => {
+                try {
+                    const res = await userAPI.get(`/${u.id}`);
+                    const userDetails = res.data.data;
+                    setFormData(prev => ({
+                        ...prev,
+                        name: userDetails.name || "",
+                        numberPhone: userDetails.numberPhone || "",
+                        address: userDetails.address || "",
+                        province: userDetails.province || "",
+                        district: userDetails.district || ""
+                    }));
+                    console.log("Loaded user details from API:", userDetails);
+                } catch (err) {
+                    console.error("Error loading user details:", err);
+                    // Fallback to localStorage data if API fails
+                    setFormData(prev => ({
+                        ...prev,
+                        name: u.name || "",
+                        numberPhone: u.numberPhone || "",
+                        address: u.address || "",
+                        province: u.province || "",
+                        district: u.district || ""
+                    }));
+                }
+            };
+            loadUserDetails();
         } else {
             setLoading(false);
         }
@@ -95,7 +165,7 @@ const ThanhToan = () => {
         if (!user) return;
         const loadCoupons = async () => {
             try {
-                const res = await couponAPI.get(`/${user.id}/coupons`);
+                const res = await userCouponAPI.get(`/${user.id}/coupons`);
                 setMyCoupons(res.data.data || []);
             } catch (err) {
                 console.error("Load user coupons error:", err);
@@ -104,46 +174,77 @@ const ThanhToan = () => {
         loadCoupons();
     }, [user]);
 
-    // tính toán giảm giá khi áp dụng mã giảm giá hoặc khi tổng tiền thay đổi
-    useEffect(() => {
-        if (!selectedCoupon) {
-            setDiscount(0);
-            return;
-        }
-        if (totalPrice < selectedCoupon.minOrderValue) {
-            setDiscount(0);
-            return;
-        }
-        let disc = 0;
-        if (selectedCoupon.type === "percent") {
-            disc = Math.round(totalPrice * selectedCoupon.discountValue / 100);
-            if (selectedCoupon.maxDiscount && disc > selectedCoupon.maxDiscount) {
-                disc = selectedCoupon.maxDiscount;
-            }
-        } else {
-            disc = selectedCoupon.discountValue;
-        }
-        setDiscount(disc);
-    }, [selectedCoupon, totalPrice]);
-
     const finalPrice = totalPrice - discount;
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Validate số điện thoại Việt Nam
+    const validatePhoneNumber = (phone) => {
+        const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})\b/;
+        return phoneRegex.test(phone);
     };
 
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => {
+            const newData = {
+                ...prev,
+                [name]: (name === "province" || name === "district")
+                    ? Number(value)
+                    : value
+            }; 
+
+            if (name === "province") {
+                newData.district = "";
+            }
+
+            return newData;
+        });
+    };
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.name || !formData.phone || !formData.address) {
-            alert("Vui lòng điền đầy đủ thông tin giao hàng!");
+        
+        // Validation
+        if (!formData.name.trim()) {
+            alert("Vui lòng nhập họ và tên!");
             return;
         }
+        
+        if (!formData.numberPhone.trim()) {
+            alert("Vui lòng nhập số điện thoại!");
+            return;
+        }
+        
+        if (!validatePhoneNumber(formData.numberPhone)) {
+            alert("Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại Việt Nam (10-11 số, bắt đầu bằng 03, 05, 07, 08, 09).");
+            return;
+        }
+        
+        if (!formData.province) {
+            alert("Vui lòng chọn tỉnh/thành phố!");
+            return;
+        }
+        
+        if (!formData.district) {
+            alert("Vui lòng chọn quận/huyện!");
+            return;
+        }
+        
+        if (!formData.addressDetail.trim()) {
+            alert("Vui lòng nhập địa chỉ giao hàng!");
+            return;
+        }
+
+        
+        
         setSubmitting(true);
         try {
+            const selectedProvince = provinces.find(p => p.code === formData.province);
+            const selectedDistrict = districts.find(d => d.code === formData.district);
+            const fullAddress = `${formData.addressDetail}, ${selectedDistrict?.name}, ${selectedProvince?.name}`;
+
             const orderReq = {
                 userName: formData.name,
-                numberPhone: formData.phone,
-                address: formData.address,
+                numberPhone: formData.numberPhone,
+                address: fullAddress,
                 note: formData.note || "",
                 payment: formData.payment,
                 couponCode: selectedCoupon?.code || null
@@ -185,7 +286,7 @@ const ThanhToan = () => {
             </div>
         );
     }
-
+//address: formData.address
     return (
         <div className="thanhtoan-page">
             <Myheader />
@@ -228,23 +329,80 @@ const ThanhToan = () => {
                                         <label>Số điện thoại *</label>
                                         <input
                                             type="tel"
-                                            name="phone"
-                                            value={formData.phone}
+                                            name="numberPhone"
+                                            value={formData.numberPhone}
                                             onChange={handleChange}
                                             placeholder="Nhập số điện thoại"
                                             required
                                         />
+                                        {formData.numberPhone && !validatePhoneNumber(formData.numberPhone) && (
+                                            <small style={{ color: 'red' }}>Số điện thoại không hợp lệ</small>
+                                        )}
+                                    </div>
+                                    <div className="tt-form-group tt-select-group">
+                                        <label className="tt-label">Tỉnh/Thành phố *</label>
+                                        <select
+                                            className="tt-select"
+                                            name="province"
+                                            value={formData.province}
+                                            onChange={handleChange}
+                                            required
+                                            disabled={loadingProvinces}
+                                        >
+                                            <option value="">
+                                                {loadingProvinces ? "Đang tải..." : "-- Chọn tỉnh/thành phố --"}
+                                            </option>
+                                            {provinces.map(province => (
+                                                <option key={province.code} value={province.code}>
+                                                    {province.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="tt-form-group tt-select-group">
+                                        <label className="tt-label">Quận/Huyện *</label>
+                                        <select
+                                            className="tt-select"
+                                            name="district"
+                                            value={formData.district}
+                                            onChange={handleChange}
+                                            required
+                                            disabled={!formData.province || loadingDistricts}
+                                        >
+                                            <option value="">
+                                                {!formData.province 
+                                                    ? "Chọn tỉnh/thành phố trước" 
+                                                    : loadingDistricts 
+                                                        ? "Đang tải..." 
+                                                        : "-- Chọn quận/huyện --"
+                                                }
+                                            </option>
+                                            {districts.map(district => (
+                                                <option key={district.code} value={district.code}>
+                                                    {district.name}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="tt-form-group">
                                         <label>Địa chỉ giao hàng *</label>
                                         <input
                                             type="text"
-                                            name="address"
-                                            value={formData.address}
+                                            name="addressDetail"
+                                            value={formData.addressDetail}
                                             onChange={handleChange}
-                                            placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/TP"
+                                            placeholder="Số nhà, tên đường"
                                             required
                                         />
+                                        <small style={{ color: '#666' }}>
+                                            {formData.addressDetail && (
+                                                <>
+                                                    {formData.addressDetail}
+                                                    {formData.district && `, ${districts.find(d => d.code === formData.district)?.name}`}
+                                                    {formData.province && `, ${provinces.find(p => p.code === formData.province)?.name}`}
+                                                </>
+                                            )}
+                                        </small>
                                     </div>
                                     <div className="tt-form-group">
                                         <label>Ghi chú</label>
@@ -377,7 +535,7 @@ const ThanhToan = () => {
                                 )}
 
                                 {/* MoMo QR */}
-                                {formData.payment === 'momo' && finalPrice > 0 && (
+                                {formData.payment == 'momo' && finalPrice > 0 && (
                                     <div className="tt-qr-section tt-qr-momo">
                                         <div className="tt-qr-header" style={{ background: 'linear-gradient(135deg, #a50064, #d6006e)' }}>
                                             <i className="fas fa-qrcode"></i>

@@ -6,6 +6,7 @@ import do_an_lien_nganh.laptop.sales.website.entity.Cart;
 import do_an_lien_nganh.laptop.sales.website.entity.CartItem;
 import do_an_lien_nganh.laptop.sales.website.entity.Coupon;
 import do_an_lien_nganh.laptop.sales.website.entity.User;
+import do_an_lien_nganh.laptop.sales.website.enums.UserRole;
 import do_an_lien_nganh.laptop.sales.website.mapper.CouponMapper;
 import do_an_lien_nganh.laptop.sales.website.mapper.UserMapper;
 import do_an_lien_nganh.laptop.sales.website.repository.CartRepository;
@@ -92,15 +93,16 @@ public class UserServiceImpl implements UserService {
         return users.stream()
                 .map(user -> userMapper.toUserResponse(
                         user,
-                        getTotalItems(user.getId())
+                        getTotalItems(user)
                 ))
                 .toList();
     }
 
     @Override
-    public Integer getTotalItems(Long userId) {
+    public Integer getTotalItems(User user) {
+        if(user.getRole() == UserRole.admin) return 0;
 
-        Cart cart = cartService.getById(userId);
+        Cart cart = cartService.getById(user.getId());
         List<CartItem> items = cart.getItems();
         int totalItems = 0;
         for (CartItem item : items) {

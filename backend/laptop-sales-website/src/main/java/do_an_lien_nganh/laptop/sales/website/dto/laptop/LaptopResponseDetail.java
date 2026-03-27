@@ -1,5 +1,6 @@
 package do_an_lien_nganh.laptop.sales.website.dto.laptop;
 
+import do_an_lien_nganh.laptop.sales.website.entity.Brand;
 import lombok.Data;
 
 import java.util.List;
@@ -12,9 +13,8 @@ public class LaptopResponseDetail {
     private Long price;
     private Integer remain;
 
-    private String company;
+    private Brand brand;
 
-    private Long monthly;
     private String cpu;
     private String ram;
     private String drive;

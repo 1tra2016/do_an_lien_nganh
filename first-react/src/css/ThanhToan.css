@@ -107,7 +107,62 @@
 .tt-form-group textarea {
     resize: vertical;
 }
+/* Group spacing */
+.tt-select-group {
+    margin-bottom: 18px;
+}
 
+/* Label */
+.tt-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+/* Select box */
+.tt-select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+/* Hover */
+.tt-select:hover {
+    border-color: #888;
+}
+
+/* Focus */
+.tt-select:focus {
+    outline: none;
+    border-color: #EE1926;
+    box-shadow: 0 0 0 2px rgba(238, 25, 38, 0.15);
+}
+
+/* Disabled */
+.tt-select:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    color: #999;
+}
+
+/* Option */
+.tt-select option {
+    padding: 10px;
+}
+
+/* Responsive (optional) */
+@media (max-width: 768px) {
+    .tt-select {
+        font-size: 13px;
+        padding: 8px 10px;
+    }
+}
 /* Payment Options */
 .tt-payment-options {
     display: flex;

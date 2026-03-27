@@ -9,6 +9,7 @@ import do_an_lien_nganh.laptop.sales.website.mapper.LaptopMapper;
 import do_an_lien_nganh.laptop.sales.website.repository.LaptopRepository;
 import do_an_lien_nganh.laptop.sales.website.service.LaptopService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LaptopServiceImpl implements LaptopService {
 
+    @Value("${app.stock.low-threshold}")
+    private int lowStockThreshold;
     private final LaptopRepository laptopRepository;
 
     @Override //sử dụng Specification để áp dụng bộ lọc đa dụng
@@ -28,27 +31,46 @@ public class LaptopServiceImpl implements LaptopService {
             String keyword,
             int page,
             int size,
-            String brand,
+            Integer brandId,
             Long minPrice,
             Long maxPrice,
             String sortField,
-            String sortDir
+            String sortDir,
+            String stockStatus
     ) {
 
         Specification<Laptop> spec = (root, query, cb) -> cb.conjunction();
-
+        //lọc theo tìm kiếm
         if (keyword != null && !keyword.isBlank()) {
             spec = spec.and((root, query, cb) ->
                     cb.like(cb.lower(root.get("name")), "%" + keyword.toLowerCase() + "%"));
         }
-
-        // 1. Lọc theo hãng
-        if (brand != null && !brand.isEmpty()) {
+        //lọc theo hãng
+        if (brandId != null) {
             spec = spec.and((root, query, cb) ->
-                    cb.equal(cb.lower(root.get("company")), brand.toLowerCase()));
+                    cb.equal(root.get("brand").get("id"), brandId));
+        }
+        //Lọc số lượng sản pẩm
+        if (stockStatus != null && !stockStatus.isBlank()) {
+            switch (stockStatus) {
+                case "out": // hết hàng
+                    spec = spec.and((root, query, cb) ->
+                            cb.equal(root.get("remain"), 0));
+                    break;
+
+                case "low": // sắp hết < 10
+                    spec = spec.and((root, query, cb) ->
+                            cb.lessThan(root.get("remain"), lowStockThreshold));
+                    break;
+
+                case "instock": // còn hàng
+                    spec = spec.and((root, query, cb) ->
+                            cb.greaterThan(root.get("remain"), 0));
+                    break;
+            }
         }
 
-        // 2. Lọc theo khoảng giá
+        //Lọc theo khoảng giá
         if (minPrice != null) {
             spec = spec.and((root, query, cb) ->
                     cb.greaterThanOrEqualTo(root.get("price"), minPrice));
@@ -59,7 +81,7 @@ public class LaptopServiceImpl implements LaptopService {
                     cb.lessThanOrEqualTo(root.get("price"), maxPrice));
         }
 
-        // 3. Sort
+        // Sort
         Sort sort = Sort.by(
                 sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortField
@@ -105,7 +127,7 @@ public class LaptopServiceImpl implements LaptopService {
     }
 
     @Override
-    public List<Laptop> get4RecommendedLaptops() {
-        return laptopRepository.get4RandomLaptops();
+    public List<LaptopResponseShort> get4RecommendedLaptops() {
+        return laptopRepository.get4RandomLaptops().stream().map(LaptopMapper::toLaptopResponseShort).toList();
     }
 }

@@ -172,6 +172,7 @@ button{
     background-color: white;
 }
 .muahang>p{
+    margin-top:10px;
     color: gray;
     font-size: 20px;
     margin-bottom: 0px;
@@ -198,8 +199,22 @@ button{
     color: red;
     text-align: center;
 }
+#price{
+    margin: 0px;
+    color: red;
+    text-align: center;
+    font-size: 40px;
+}
+.now{
+    top:10px;
+    display: flex;
+    flex-direction: row;
+    width: 90%;
+    padding: 0px 5%;
+    justify-content: space-between;
+        
+}
 .now>a{
-    bottom:0px;
     width: 150px;
     font-size: larger;
     font-weight: 700;
@@ -209,7 +224,22 @@ button{
     border-radius: 20px;
     padding: 20px;
     text-align: center;
-    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.now>a:hover{
+    transform: scale(1.1);
+}
+.now>a:last-child{
+    background-color: rgb(43,128,221);
+    border: 2px solid rgb(78, 78, 78);
+}
+.now>p{
+    margin: 0px;
+    color: gray;
+    font-size: 20px;
+    align-self: center;
 }
 .monthly>h3{
     margin: 8px;
@@ -231,14 +261,10 @@ button{
 .muahang>div>div>a:hover{
     transform: scale(1.1);
 }
-.now>p{
-    position: absolute;
-    right:0%;
-    top:50%;
-    transform: translateX(80%);
-}
 .muahang>h3{
     text-align: center;
+    margin: 10px;
+    margin-top: 30px;
 }
 .thongso{   
     margin-top: 20px;

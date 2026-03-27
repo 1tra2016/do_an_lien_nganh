@@ -16,6 +16,8 @@ public interface LaptopRepository extends JpaRepository<Laptop, Long>, JpaSpecif
     //Không viết các chức năng lọc khác ở đây
     //Lọc đa lớp sẽ do Service đảm nhận nhờ gọi đến repository có chứa JpaSpecificationExecutor
 
-    @Query(value = "SELECT * FROM laptops ORDER BY RANDOM() LIMIT 4", nativeQuery = true)
+    @Query(value = "SELECT * FROM laptops WHERE remain > 0 ORDER BY RANDOM() LIMIT 4", nativeQuery = true)
     List<Laptop> get4RandomLaptops();
+
+    boolean existsByBrandId(Integer id);
 }

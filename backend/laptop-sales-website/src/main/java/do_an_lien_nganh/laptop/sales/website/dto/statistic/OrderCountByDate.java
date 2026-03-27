@@ -6,8 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class OrderCountByDate {
-
     private String date;
     private long orders;
-
 }

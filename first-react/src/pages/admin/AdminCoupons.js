@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import {showAlert, showConfirm} from '../../alertUtils';
 
-const url = process.env.REACT_APP_BACKEND_URL || "http://localhost:8080";
+const url = "http://localhost:8080";
 const couponAPI = axios.create({
     baseURL: url + '/api/coupons',
     headers: { "Content-Type": "application/json" },
 });
+
+const generateRandomCouponCode = (prefix = 'SALE') => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const randomPart = Array.from(
+        { length: 8 },
+        () => chars[Math.floor(Math.random() * chars.length)]
+    ).join('');
+
+    return `${prefix}${randomPart}`;
+};
 
 const AdminCoupons = () => {
     const [coupons, setCoupons] = useState([]);
@@ -24,7 +35,7 @@ const AdminCoupons = () => {
             const res = await couponAPI.get('');
             console.log('API Response:', res);
             console.log('Data:', res.data);
-            const couponsList = res.data.data || res.data;
+            const couponsList = res.data.data;
             console.log('Coupons:', couponsList);
             setCoupons(couponsList);
         } catch (err) { 
@@ -39,31 +50,68 @@ const AdminCoupons = () => {
         setShowForm(false);
     };
 
+    const handleCreateCoupon = () => {
+        setEditing(null);
+        setForm({
+            code: generateRandomCouponCode(),
+            type: 'percent',
+            discountValue: '',
+            minOrderValue: '',
+            maxDiscount: '',
+            usageLimit: '',
+            expiryDate: ''
+        });
+        setShowForm(true);
+    };
+
+    const regenerateCouponCode = () => {
+        setForm(prev => ({ ...prev, code: generateRandomCouponCode() }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const maxDiscountValue = Number(form.maxDiscount) || 0;
+
+        // ⚠️ cảnh báo nếu quá lớn
+        if (form.type === 'percent' && maxDiscountValue > 5000000) {
+
+            const result = await showConfirm(
+                `Giảm tối đa ${maxDiscountValue.toLocaleString('vi-VN')}₫ quá lớn, bạn có chắc không?`,
+                'warning'
+            );
+
+            if (!result) return;
+        }
+
         const data = {
             code: form.code,
             type: form.type,
             discountValue: Number(form.discountValue),
             minOrderValue: Number(form.minOrderValue),
-            maxDiscount: Number(form.maxDiscount) || 0,
+            maxDiscount: maxDiscountValue,
             usageLimit: Number(form.usageLimit),
-            expiryDate: form.expiryDate
+            expiryDate: form.expiryDate + "T23:59:59"
         };
+
         try {
             if (editing) {
                 await couponAPI.patch(`/${editing.id}`, data);
             } else {
                 await couponAPI.post('', data);
             }
+
+            // 🎉 success alert
+            showAlert('Đã lưu mã giảm giá','success');
+
             fetchCoupons();
             resetForm();
-        } catch (err) { 
-            console.error('Lỗi lưu mã giảm giá:', err); 
-            alert('Lỗi lưu mã giảm giá!'); 
+
+        } catch (err) {
+            console.error('Lỗi lưu mã giảm giá:', err);
+            showAlert(err.response?.data?.message || 'Có lỗi xảy ra khi lưu mã giảm giá.', 'error');
         }
     };
-
     const handleEdit = (coupon) => {
         console.log('Edit coupon:', coupon);
         setForm({
@@ -96,7 +144,7 @@ const AdminCoupons = () => {
         <div>
             <div className="admin-table-header">
                 <h2><i className="fas fa-ticket-alt" style={{ color: '#EE1926', marginRight: '8px' }}></i>Quản lý mã giảm giá</h2>
-                <button className="admin-add-btn" onClick={() => { resetForm(); setShowForm(true); }}>
+                <button className="admin-add-btn" onClick={handleCreateCoupon}>
                     <i className="fas fa-plus"></i> Thêm mã
                 </button>
             </div>
@@ -110,7 +158,31 @@ const AdminCoupons = () => {
                             <div className="admin-form-row">
                                 <div className="admin-form-group">
                                     <label>Mã code *</label>
-                                    <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} required placeholder="VD: GIAM10PHAN" />
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <input
+                                            value={form.code}
+                                            onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                                            required
+                                            placeholder="VD: GIAM10PHAN"
+                                            style={{ flex: 1 }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={regenerateCouponCode}
+                                            style={{
+                                                whiteSpace: 'nowrap',
+                                                border: '1px solid #EE1926',
+                                                background: '#fff5f5',
+                                                color: '#EE1926',
+                                                borderRadius: '8px',
+                                                padding: '0 12px',
+                                                fontWeight: 600,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Tạo mã
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="admin-form-group">
                                     <label>Loại giảm giá *</label>

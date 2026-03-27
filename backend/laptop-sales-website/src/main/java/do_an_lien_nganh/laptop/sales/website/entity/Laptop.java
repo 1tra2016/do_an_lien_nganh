@@ -17,10 +17,11 @@ public class Laptop {
     @Column(columnDefinition = "TEXT") // bởi vì có thể sẽ dài hơn Varchar255 nên để text
     private String name;
     private Long price;
-    private Long monthly;
     private Integer remain;
 
-    private String company;
+    @ManyToOne
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
 
     private String cpu;
     private String ram;

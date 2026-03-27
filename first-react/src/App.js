@@ -24,6 +24,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCoupons from "./pages/admin/AdminCoupons";
+import AdminBrand from "./pages/admin/AdminBrand";
 import MyCoupons from "./pages/MyCoupons";
 const App = () => {
   const [currentUser, setCurrentUser] = useState(
@@ -64,6 +65,7 @@ const App = () => {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="coupons" element={<AdminCoupons />} />
+          <Route path="brands" element={<AdminBrand />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

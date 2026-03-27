@@ -6,7 +6,6 @@ import Footer from "./Footer";
 import axios from "axios";
 import { useEffect, useState } from "react";    
 
-// ✅ đưa axios ra ngoài component
 const cartAPI = axios.create({
   baseURL: "http://localhost:8080/api/carts"
 });
@@ -26,7 +25,6 @@ const Giohang = () => {
 
         const storedUser = localStorage.getItem("user");
 
-        // ✅ nếu chưa login
         if (!storedUser) {
           setLoading(false);
           navigate("/login");
@@ -58,7 +56,6 @@ const Giohang = () => {
       }
     };
 
-    // ✅ tăng số lượng
     const increaseQuantity = async (laptopId) => {
       try {
         await cartAPI.patch(`/${user.id}/${laptopId}?delta=1`);
@@ -68,7 +65,6 @@ const Giohang = () => {
       }
     };
 
-    // ✅ giảm số lượng
     const decreaseQuantity = async (laptopId) => {
       try {
         await cartAPI.patch(`/${user.id}/${laptopId}?delta=-1`);
@@ -78,7 +74,6 @@ const Giohang = () => {
       }
     };
 
-    // ✅ xóa sản phẩm
     const removeItem = async (laptopId) => {
       if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
       try {
@@ -89,13 +84,11 @@ const Giohang = () => {
       }
     };
 
-    // ✅ tính tổng tiền
     const totalPrice = cartItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
 
-    // ✅ tổng số sản phẩm
     const totalItems = cartItems.reduce(
       (sum, item) => sum + item.quantity,
       0

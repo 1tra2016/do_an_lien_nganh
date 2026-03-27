@@ -12,10 +12,9 @@ public class LaptopMapper {
 
         laptop.setName(request.getName());
         laptop.setPrice(request.getPrice());
-        laptop.setMonthly(request.getMonthly());
         laptop.setRemain(request.getRemain());
 
-        laptop.setCompany(request.getCompany());
+        laptop.setBrand(request.getBrand());
 
         laptop.setCpu(request.getCpu());
         laptop.setRam(request.getRam());
@@ -39,9 +38,8 @@ public class LaptopMapper {
 
         if (request.getName() != null) laptop.setName(request.getName());
         if (request.getPrice() != null) laptop.setPrice(request.getPrice());
-        if (request.getMonthly() != null) laptop.setMonthly(request.getMonthly());
         if (request.getRemain() != null) laptop.setRemain(request.getRemain());
-        if (request.getCompany() != null) laptop.setCompany(request.getCompany());
+        if (request.getBrand() != null) laptop.setBrand(request.getBrand());
 
         if (request.getCpu() != null) laptop.setCpu(request.getCpu());
         if (request.getRam() != null) laptop.setRam(request.getRam());
@@ -66,6 +64,7 @@ public class LaptopMapper {
         laptopResponseShort.setId(laptop.getId());
         laptopResponseShort.setPrice(laptop.getPrice());
         laptopResponseShort.setRemain(laptop.getRemain());
+        laptopResponseShort.setBrand(laptop.getBrand());
         laptopResponseShort.setImageMain(laptop.getImages().get(0));
 
         return  laptopResponseShort;
@@ -77,10 +76,9 @@ public class LaptopMapper {
         requestDetail.setId(laptop.getId());
         requestDetail.setName(laptop.getName());
         requestDetail.setPrice(laptop.getPrice());
-        requestDetail.setMonthly(laptop.getMonthly());
         requestDetail.setRemain(laptop.getRemain());
 
-        requestDetail.setCompany(laptop.getCompany());
+        requestDetail.setBrand(laptop.getBrand());
 
         requestDetail.setCpu(laptop.getCpu());
         requestDetail.setRam(laptop.getRam());

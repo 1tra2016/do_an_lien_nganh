@@ -4,7 +4,7 @@ import { userAPI } from '../APIs/APIs';
 import Myheader from './Myheader';
 import Footer from './Footer';
 import FlashSale from '../components/home/FlashSale';
-import ProductSection from '../components/home/ProductSection';
+import Recommend4Laptops from '../components/home/Recommend4Laptops';
 import '../css/binh.css';
 import '../css/MyCoupons.css';
 
@@ -137,7 +137,7 @@ const KhuyenMai = () => {
                     )}
 
                     <FlashSale />
-                    <ProductSection />
+                    <Recommend4Laptops />
                 </div>
             </div>
             <Footer />

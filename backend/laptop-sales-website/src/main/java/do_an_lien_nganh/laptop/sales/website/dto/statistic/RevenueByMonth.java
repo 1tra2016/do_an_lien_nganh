@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class RevenueByDate {
+public class RevenueByMonth {
 
     private String date;
     private long revenue;

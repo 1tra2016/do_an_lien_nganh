@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { userAPI } from "../../APIs/APIs";
+import { cartAPI } from "../../APIs/APIs";
 
 const laptopAPI = axios.create({
   baseURL: "http://localhost:8080/api/laptops",
@@ -20,7 +20,7 @@ const Recommend4Laptops = () => {
 
       const response = await laptopAPI.get("/recommend");
 
-      setItems(response.data?.data || []);
+      setItems(response.data.data || []);
 
     } catch (err) {
       console.error("Error fetching recommended laptops:", err);
@@ -28,63 +28,32 @@ const Recommend4Laptops = () => {
   };
 
   const addToCart = async (e, itemId) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    e.preventDefault();
-    e.stopPropagation();
+      const storedUser = localStorage.getItem("user");
 
-    const storedUser = localStorage.getItem("user");
-
-    if (!storedUser) {
-      alert("Bạn chưa đăng nhập! Vui lòng đăng nhập để mua hàng.");
-      return;
-    }
-
-    const currentUser = JSON.parse(storedUser);
-
-    try {
-
-      const response = await userAPI.get(`/${currentUser.id}`);
-
-      const currentCart = response.data.cart || [];
-
-      const itemIndex = currentCart.findIndex(c => c.id === itemId);
-
-      if (itemIndex !== -1) {
-        currentCart[itemIndex].number += 1;
-      } else {
-        currentCart.push({ id: itemId, number: 1 });
+      if (!storedUser) {
+          alert("Bạn chưa đăng nhập!");
+          return;
       }
 
-      await userAPI.patch(`/${currentUser.id}`, { cart: currentCart });
+      const currentUser = JSON.parse(storedUser);
 
-      const itemData = items.find(i => i.id === itemId);
+      try {
+          const res = await cartAPI.post(`/${currentUser.id}/${itemId}`);
 
-      if (itemData && itemData.remain > 0) {
-        await laptopAPI.patch(`/${itemId}`, {
-          remain: itemData.remain - 1
-        });
+          console.log("Cart updated:", res.data);
+
+          fetchItems();
+          // loadCart();
+
+          alert("✅ Thêm vào giỏ hàng thành công!");
+
+      } catch (err) {
+          console.error("Error adding to cart:", err);
+          alert("Đã xảy ra lỗi!");
       }
-
-      const updatedUser = {
-        ...currentUser,
-        cart: currentCart
-      };
-
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-
-      window.dispatchEvent(new Event("cartUpdated"));
-
-      alert("✅ Thêm vào giỏ hàng thành công!");
-
-      fetchItems();
-
-    } catch (err) {
-
-      console.error("Error adding to cart:", err);
-
-      alert("Đã xảy ra lỗi khi thêm vào giỏ hàng!");
-
-    }
   };
 
   return (
@@ -96,8 +65,8 @@ const Recommend4Laptops = () => {
         {items.map((item) => {
 
           const image =
-            item.images && item.images.length > 0
-              ? item.images[0]
+            item.imageMain
+              ? item.imageMain
               : "/no-image.png";
 
           return (

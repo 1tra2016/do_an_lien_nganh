@@ -8,77 +8,133 @@ import '../css/Profile.css';
 const Profile = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [formData, setFormData] = useState({});
     const [editing, setEditing] = useState(false);
-    const [formData, setFormData] = useState({ name: '', email: '', numberphone: '' });
-    const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(true);
+    const [successMsg, setSuccessMsg] = useState("");
+    const [errors, setErrors] = useState({});
 
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    const userId = storedUser?.id;
     useEffect(() => {
-        const stored = JSON.parse(localStorage.getItem('user'));
-        if (!stored || !stored.id) {
-            navigate('/dangnhap');
+        if (!userId) {
+            navigate("/dangnhap");
             return;
         }
-        // Lấy dữ liệu mới nhất từ server
+
         const fetchUser = async () => {
             try {
-                const res = await userAPI.get(`/${stored.id}`);
-                setUser(res.data);
-                setFormData({
-                    name: res.data.name || '',
-                    email: res.data.email || '',
-                    numberphone: res.data.numberphone || ''
-                });
+                const res = await userAPI.get(`/${userId}`);
+                const userData = res.data.data;
+
+                setUser(userData);
+                setFormData(userData);
             } catch (err) {
-                console.error('Lỗi tải thông tin:', err);
-                // Fallback dùng localStorage
-                setUser(stored);
-                setFormData({
-                    name: stored.name || '',
-                    email: stored.email || '',
-                    numberphone: stored.numberphone || ''
-                });
+                console.error("Lỗi tải user:", err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
+
         fetchUser();
-    }, [navigate]);
+    }, [userId, navigate]);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+
+        // Clear error for this field
+        setErrors(prev => ({
+            ...prev,
+            [name]: ""
+        }));
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        // Validate name
+        if (!formData.name?.trim()) {
+            newErrors.name = "Tên không được để trống";
+        }
+
+        // Validate email
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!formData.email?.trim()) {
+            newErrors.email = "Email không được để trống";
+        } else if (!emailRegex.test(formData.email)) {
+            newErrors.email = "Email phải đúng định dạng (ví dụ: example@email.com)";
+        }
+
+        // Validate numberPhone
+        const phoneRegex = /^0[3-9]\d{8}$/;
+        if (formData.numberPhone && !phoneRegex.test(formData.numberPhone)) {
+            newErrors.numberPhone = "Số điện thoại phải đúng định dạng (10 số, bắt đầu bằng 03-09)";
+        }
+
+        // Validate address (optional, but if provided, not empty)
+        if (formData.address=== '' || formData.address.trim()==='') {
+            newErrors.address = "Địa chỉ không được để trống nếu nhập";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSave = async () => {
+        if (!validateForm()) {
+            return;
+        }
+
+        // Check if email changed and if it exists
+        if (formData.email !== user.email) {
+            try {
+                const response = await userAPI.get('');
+                const existingUsers = response.data.data;
+                const emailExists = existingUsers.find(u => u.email === formData.email && u.id !== userId);
+                if (emailExists) {
+                    setErrors({ email: "Email đã tồn tại, vui lòng chọn email khác" });
+                    return;
+                }
+            } catch (err) {
+                console.error("Error checking email:", err);
+                alert("Lỗi kiểm tra email");
+                return;
+            }
+        }
+
         try {
-            const res = await userAPI.patch(`/${user.id}`, {
-                name: formData.name,
-                email: formData.email,
-                numberphone: formData.numberphone
-            });
-            const updatedUser = res.data;
+            const res = await userAPI.put(`/${userId}`, formData);
+
+            const updatedUser = res.data.data;
+
             setUser(updatedUser);
-            // Cập nhật localStorage
-            localStorage.setItem('user', JSON.stringify({
-                ...JSON.parse(localStorage.getItem('user')),
-                name: updatedUser.name,
-                email: updatedUser.email,
-                numberphone: updatedUser.numberphone
+            setFormData(updatedUser);
+
+            localStorage.setItem("user", JSON.stringify({
+                ...storedUser,
+                ...updatedUser
             }));
+
             setEditing(false);
-            setSuccessMsg('Cập nhật thông tin thành công!');
-            setTimeout(() => setSuccessMsg(''), 3000);
+            setSuccessMsg("Cập nhật thành công!");
+
+            setTimeout(() => setSuccessMsg(""), 3000);
+
         } catch (err) {
-            console.error('Lỗi cập nhật:', err);
-            alert('Không thể cập nhật. Vui lòng thử lại.');
+            console.error("Update error:", err);
+            alert("Không thể cập nhật");
         }
     };
 
     const handleCancel = () => {
-        setFormData({
-            name: user.name || '',
-            email: user.email || '',
-            numberphone: user.numberphone || ''
-        });
+        if (!user) return;
+
+        setFormData(user);
         setEditing(false);
     };
 
@@ -93,6 +149,7 @@ const Profile = () => {
             </div>
         );
     }
+    if (!user) return <div>Không tìm thấy user</div>;
 
     const avatarLetter = user?.name ? user.name.charAt(0) : '?';
 
@@ -140,7 +197,14 @@ const Profile = () => {
                                     <label>Số điện thoại</label>
                                     <div className="profile-field-value">
                                         <i className="fas fa-phone-alt"></i>
-                                        <span>{user?.numberphone || '—'}</span>
+                                        <span>{user?.numberPhone || '—'}</span>
+                                    </div>
+                                </div>
+                                <div className="profile-field">
+                                    <label>Địa chỉ</label>
+                                    <div className="profile-field-value">
+                                        <i className="fas fa-map-marker-alt"></i>
+                                        <span>{user?.address || '—'}</span>
                                     </div>
                                 </div>
                                 <div className="profile-actions">
@@ -166,6 +230,7 @@ const Profile = () => {
                                             required
                                         />
                                     </div>
+                                    {errors.name && <p style={{ color: "red", fontSize: "14px", marginTop: "5px" }}>{errors.name}</p>}
                                 </div>
                                 <div className="profile-field">
                                     <label>Email</label>
@@ -180,6 +245,7 @@ const Profile = () => {
                                             required
                                         />
                                     </div>
+                                    {errors.email && <p style={{ color: "red", fontSize: "14px", marginTop: "5px" }}>{errors.email}</p>}
                                 </div>
                                 <div className="profile-field">
                                     <label>Số điện thoại</label>
@@ -187,12 +253,27 @@ const Profile = () => {
                                         <i className="fas fa-phone-alt"></i>
                                         <input
                                             type="tel"
-                                            name="numberphone"
-                                            value={formData.numberphone}
+                                            name="numberPhone"
+                                            value={formData.numberPhone}
                                             onChange={handleChange}
                                             placeholder="Nhập số điện thoại"
                                         />
                                     </div>
+                                    {errors.numberPhone && <p style={{ color: "red", fontSize: "14px", marginTop: "5px" }}>{errors.numberPhone}</p>}
+                                </div>
+                                <div className="profile-field">
+                                    <label>Địa chỉ</label>
+                                    <div className="profile-field-value">
+                                        <i className="fas fa-map-marker-alt"></i>
+                                        <input
+                                            type="text"
+                                            name="address"
+                                            value={formData.address}
+                                            onChange={handleChange}
+                                            placeholder="Nhập địa chỉ"
+                                        />
+                                    </div>
+                                    {errors.address && <p style={{ color: "red", fontSize: "14px", marginTop: "5px" }}>{errors.address}</p>}
                                 </div>
                                 <div className="profile-actions">
                                     <button className="profile-btn profile-btn-save" onClick={handleSave}>

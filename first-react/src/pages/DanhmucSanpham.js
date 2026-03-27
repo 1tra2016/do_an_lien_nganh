@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import Myheader from "./Myheader";
@@ -12,12 +12,13 @@ const API_URL = "http://localhost:8080/api/laptops";
 const DanhmucSanpham = () => {
 
   const location = useLocation();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
 
   const keyword = searchParams.get("keyword") || "";
-  const categoryParam = searchParams.get("category") || "";
 
   const [items, setItems] = useState([]);
+  const [brands, setBrands] = useState([]);
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -26,84 +27,71 @@ const DanhmucSanpham = () => {
   const [giathap, setGiathap] = useState(null);
   const [giacao, setGiacao] = useState(null);
   const [pk, setpk] = useState(null);
-  const [brand, setBrand] = useState(null);
+  const [brandId, setBrandId] = useState(null);
 
-  const chonKhoangGia = (thap, cao, pk) => {
-    setGiathap(thap);
-    setGiacao(cao);
-    setpk(pk);
+  // ✅ FIX: thêm lại hàm bị thiếu
+  const chonKhoangGia = (min, max, key) => {
     setPage(0);
+    setGiathap(min);
+    setGiacao(max);
+    setpk(key);
   };
 
-  const brands = [
-    { label: "Tất cả", value: null },
-    { label: "Asus", value: "asus" },
-    { label: "HP", value: "hp" },
-    { label: "Lenovo", value: "lenovo" },
-    { label: "MSI", value: "msi" },
-    { label: "Apple", value: "apple" },
-    { label: "Dell", value: "dell" },
-    { label: "Acer", value: "acer" }
-  ];
+  const clearSearch = () => {
+    navigate('/DanhmucSanpham');
+  };
+
+  const fetchBrands = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/brands");
+      setBrands(res.data.data);
+    } catch (err) {
+      console.error("Error fetching brands:", err);
+    }
+  };
 
   const fetchItems = async () => {
-
     try {
 
-      let sortField = "id";
-      let sortDir = "asc";
+      const sortMap = {
+        giatang: { field: "price", dir: "asc" },
+        giagiam: { field: "price", dir: "desc" },
+        tenAZ: { field: "name", dir: "asc" },
+        tenZA: { field: "name", dir: "desc" }
+      };
 
-      if (sapxep === "giatang") {
-        sortField = "price";
-        sortDir = "asc";
-      }
+      const sort = sortMap[sapxep] || { field: "id", dir: "asc" };
 
-      if (sapxep === "giagiam") {
-        sortField = "price";
-        sortDir = "desc";
-      }
-
-      if (sapxep === "tenAZ") {
-        sortField = "name";
-        sortDir = "asc";
-      }
-
-      if (sapxep === "tenZA") {
-        sortField = "name";
-        sortDir = "desc";
-      }
-
-      const response = await axios.get(API_URL, {
+      const res = await axios.get(API_URL, {
         params: {
-          keyword: keyword,
-          page: page,
+          keyword,
+          page,
           size: 12,
-          brand: brand,
+          brandId,
           minPrice: giathap,
           maxPrice: giacao === Infinity ? null : giacao,
-          sortField: sortField,
-          sortDir: sortDir
+          sortField: sort.field,
+          sortDir: sort.dir
         }
       });
 
-      const data = response.data.data;
+      const data = res.data.data;
 
       setItems(data.content);
       setTotalPages(data.totalPages);
 
     } catch (err) {
-
       console.error("Error fetching laptops:", err);
-
     }
-
   };
 
   useEffect(() => {
+    fetchBrands();
+  }, []);
 
+  useEffect(() => {
     fetchItems();
-
-  }, [keyword, page, brand, giathap, giacao, sapxep]);
+  }, [keyword, page, brandId, giathap, giacao, sapxep]);
 
   return (
 
@@ -112,67 +100,94 @@ const DanhmucSanpham = () => {
       <Myheader />
 
       <div className="khungmainsp">
+          <div className = "fixed">
+            
+            {/* BRAND */}
+            <div className="locphankhuc">
+              <div className="textlpk"><i className="fas fa-tag"></i> Thương hiệu:</div>
 
-        <div className="mainsp">
-
-          {keyword && (
-            <div style={{ padding: "10px 20px", fontSize: "16px" }}>
-              Kết quả tìm kiếm cho: <strong>"{keyword}"</strong>
-            </div>
-          )}
-
-          {/* Filter brand */}
-          <div className="locphankhuc">
-            <div className="textlpk"><i className="fas fa-tag"></i> Thương hiệu:</div>
-            {brands.map((b) => (
               <button
-                key={b.label}
-                onClick={() => setBrand(b.value)}
-                className={brand === b.value ? "phankhuc select" : "phankhuc"}
+                onClick={() => { setBrandId(null); setPage(0); }}
+                className={brandId === null ? "phankhuc select" : "phankhuc"}
               >
-                {b.label}
+                Tất cả
               </button>
-            ))}
-          </div>
 
-          {/* Lọc theo khoảng giá */}
-          <div className="locphankhuc">
-            <div className="textlpk"><i className="fas fa-money-bill-wave"></i> Khoảng giá:</div>
-            <button onClick={() => chonKhoangGia(null, null, "pk0")} className={pk === "pk0" || pk === null ? "phankhuc" : "phankhuc"}>Tất cả</button>
-            <button onClick={() => chonKhoangGia(5000000, 10000000, "pk1")} className={pk === "pk1" ? "phankhuc select" : "phankhuc"}>5 - 10 triệu</button>
-            <button onClick={() => chonKhoangGia(10000000, 20000000, "pk2")} className={pk === "pk2" ? "phankhuc select" : "phankhuc"}>10 - 20 triệu</button>
-            <button onClick={() => chonKhoangGia(20000000, 30000000, "pk3")} className={pk === "pk3" ? "phankhuc select" : "phankhuc"}>20 - 30 triệu</button>
-            <button onClick={() => chonKhoangGia(30000000, 50000000, "pk4")} className={pk === "pk4" ? "phankhuc select" : "phankhuc"}>30 - 50 triệu</button>
-            <button onClick={() => chonKhoangGia(50000000, Infinity, "pk5")} className={pk === "pk5" ? "phankhuc select" : "phankhuc"}>Trên 50 triệu</button>
-          </div>
+              {brands.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => { setBrandId(b.id); setPage(0); }}
+                  className={brandId === b.id ? "phankhuc select" : "phankhuc"}
+                >
+                  {b.name}
+                </button>
+              ))}
+            </div>
 
-          {/* Sắp xếp */}
-          <div className="locphankhuc">
-            <div className="textlpk"><i className="fas fa-sort"></i> Sắp xếp:</div>
-            <button onClick={() => setSapxep("giatang")} className={sapxep === "giatang" ? "phankhuc select" : "phankhuc"}>
-              <i className="fas fa-sort-amount-up"></i> Giá tăng dần
-            </button>
-            <button onClick={() => setSapxep("giagiam")} className={sapxep === "giagiam" ? "phankhuc select" : "phankhuc"}>
-              <i className="fas fa-sort-amount-down"></i> Giá giảm dần
-            </button>
-            <button onClick={() => setSapxep("tenAZ")} className={sapxep === "tenAZ" ? "phankhuc select" : "phankhuc"}>
-              <i className="fas fa-sort-alpha-down"></i> Tên A - Z
-            </button>
-            <button onClick={() => setSapxep("tenZA")} className={sapxep === "tenZA" ? "phankhuc select" : "phankhuc"}>
-              <i className="fas fa-sort-alpha-down-alt"></i> Tên Z - A
-            </button>
-          </div>
+            {/* PRICE */}
+            <div className="locphankhuc">
+              <div className="textlpk"><i className="fas fa-money-bill-wave"></i> Khoảng giá:</div>
 
-          {/* Hiển thị bộ lọc đang áp dụng */}
-          {(brand || pk || sapxep) && (
+              <button onClick={() => chonKhoangGia(null, null, "pk0")} className={pk === "pk0" || pk === null ? "phankhuc" : "phankhuc"}>
+                Tất cả
+              </button>
+              <button onClick={() => chonKhoangGia(5000000, 10000000, "pk1")} className={pk === "pk1" ? "phankhuc select" : "phankhuc"}>
+                5 - 10 triệu
+              </button>
+              <button onClick={() => chonKhoangGia(10000000, 20000000, "pk2")} className={pk === "pk2" ? "phankhuc select" : "phankhuc"}>
+                10 - 20 triệu
+              </button>
+              <button onClick={() => chonKhoangGia(20000000, 30000000, "pk3")} className={pk === "pk3" ? "phankhuc select" : "phankhuc"}>
+                20 - 30 triệu
+              </button>
+              <button onClick={() => chonKhoangGia(30000000, 50000000, "pk4")} className={pk === "pk4" ? "phankhuc select" : "phankhuc"}>
+                30 - 50 triệu
+              </button>
+              <button onClick={() => chonKhoangGia(50000000, Infinity, "pk5")} className={pk === "pk5" ? "phankhuc select" : "phankhuc"}>
+                Trên 50 triệu
+              </button>
+            </div>
+
+            {/* SORT */}
+            <div className="locphankhuc">
+              <div className="textlpk"><i className="fas fa-sort"></i> Sắp xếp:</div>
+
+              <button onClick={() => setSapxep("giatang")} className={sapxep === "giatang" ? "phankhuc select" : "phankhuc"}>
+                Giá tăng dần
+              </button>
+
+              <button onClick={() => setSapxep("giagiam")} className={sapxep === "giagiam" ? "phankhuc select" : "phankhuc"}>
+                Giá giảm dần
+              </button>
+
+              <button onClick={() => setSapxep("tenAZ")} className={sapxep === "tenAZ" ? "phankhuc select" : "phankhuc"}>
+                Tên A - Z
+              </button>
+
+              <button onClick={() => setSapxep("tenZA")} className={sapxep === "tenZA" ? "phankhuc select" : "phankhuc"}>
+                Tên Z - A
+              </button>
+            </div>
+            {/* ACTIVE FILTER */}
+          {(brandId || pk || sapxep || keyword) && (
             <div className="active-filters">
+
               <span className="active-filters-label">Đang lọc:</span>
-              {brand && (
+
+              {keyword && (
                 <span className="filter-tag">
-                  {brands.find(b => b.value === brand)?.label}
-                  <button onClick={() => setBrand(null)}>×</button>
+                  Tìm kiếm: "{keyword}"
+                  <button onClick={clearSearch}>×</button>
                 </span>
               )}
+
+              {brandId && (
+                <span className="filter-tag">
+                  {brands.find(b => b.id === brandId)?.name}
+                  <button onClick={() => setBrandId(null)}>×</button>
+                </span>
+              )}
+
               {pk && pk !== "pk0" && (
                 <span className="filter-tag">
                   {giathap && giacao !== Infinity
@@ -181,17 +196,37 @@ const DanhmucSanpham = () => {
                   <button onClick={() => chonKhoangGia(null, null, null)}>×</button>
                 </span>
               )}
+
               {sapxep && (
                 <span className="filter-tag">
-                  {sapxep === "giatang" ? "Giá tăng" : sapxep === "giagiam" ? "Giá giảm" : sapxep === "tenAZ" ? "A → Z" : "Z → A"}
+                  {sapxep === "giatang" ? "Giá tăng dần" :
+                   sapxep === "giagiam" ? "Giá giảm dần" :
+                   sapxep === "tenAZ" ? "Tên A-Z" :
+                   sapxep === "tenZA" ? "Tên Z-A" : sapxep}
                   <button onClick={() => setSapxep(null)}>×</button>
                 </span>
               )}
-              <button className="clear-all-btn" onClick={() => { setBrand(null); setGiathap(null); setGiacao(null); setpk(null); setSapxep(null); }}>
-                <i className="fas fa-times"></i> Xóa tất cả
+
+              <button className="clear-all-btn" onClick={() => {
+                setBrandId(null);
+                setGiathap(null);
+                setGiacao(null);
+                setpk(null);
+                setSapxep(null);
+                if (keyword) {
+                  clearSearch();
+                }
+              }}>
+                Xóa tất cả
               </button>
+
             </div>
           )}
+          </div>
+          
+
+          
+        <div className="mainsp">
 
           {/* LIST */}
           <ul className="laptop-list">
@@ -207,11 +242,8 @@ const DanhmucSanpham = () => {
                   </div>
 
                   <div className="title">
-
                     <h4>{item.name}</h4>
-
                     <p>{item.price.toLocaleString("vi-VN")}₫</p>
-
                   </div>
 
                 </a>
@@ -219,10 +251,10 @@ const DanhmucSanpham = () => {
               </li>
 
             ))}
+
           </ul>
 
-          {/* Pagination */}
-
+          {/* PAGINATION */}
           <div className="pagination">
 
             {Array.from({ length: totalPages }).map((_, i) => (
@@ -230,16 +262,7 @@ const DanhmucSanpham = () => {
               <button
                 key={i}
                 onClick={() => setPage(i)}
-                className={page === i ? "active" : ""}
-                style={{
-        padding: "10px 18px",
-        fontSize: "16px",
-        minWidth: "44px",
-        margin: "4px",
-        borderRadius: "6px",
-        cursor: "pointer"
-      }}
-
+                className={page === i ? "boxso active" : "boxso"}
               >
                 {i + 1}
               </button>
@@ -249,15 +272,12 @@ const DanhmucSanpham = () => {
           </div>
 
         </div>
-
       </div>
 
       <Footer />
 
     </div>
-
   );
-
 };
 
 export default DanhmucSanpham;

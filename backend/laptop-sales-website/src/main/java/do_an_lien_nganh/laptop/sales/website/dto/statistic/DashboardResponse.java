@@ -11,12 +11,10 @@ public class DashboardResponse {
     private long revenue;
     private long totalOrders;
     private long totalProducts;
+    private long totalSoldProducts;
     private long pendingOrders;
 
     private List<StatusStat> statusStats;
-    private List<RevenueByDate> revenueByDate;
-    private List<TopProduct> topProducts;
     private List<OrderCountByDate> ordersByDate;
-
     private List<OrderResponseShort> recentOrders;
 }

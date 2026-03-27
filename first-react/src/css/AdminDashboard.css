@@ -1,0 +1,48 @@
+.admin-header{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+.date-filter{
+    padding-right: 5vw;
+    /* background-color: #667eea; */
+}
+.admin-stats{
+    display: flex;
+    flex-wrap: no-wrap;
+}
+.admin-stat-card{
+    flex-basis: 29%;
+}
+
+.date-filter {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 2;
+}
+
+.date-filter select {
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.date-filter select:focus {
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.date-filter select:hover {
+  border-color: #999;
+}
+
+.date-filter select[type=number] {
+  -moz-appearance: textfield;
+}

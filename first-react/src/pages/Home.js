@@ -23,11 +23,11 @@ import BottomSection from '../components/home/BottomSection';
 const Home = () => {
   return (
     <div>
-      <Myheader />
       <main>
+      <Myheader />
         <section className="main-section">
-          <div className="background-blur" />
-          <div className="container">
+          <div className="background-blur"  />
+          <div className="container" style={{ marginLeft: '10%' }} >
             <HomeSlider />
             <HomeBanner />
           </div>

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { userAPI } from "../APIs/APIs";
 import Myheader from "./Myheader"
 import '../css/ChitietSanpham.css';
 import Footer from "./Footer"
-import ItemList from "./ItemList";
+import Recommend4Laptops from "../components/home/Recommend4Laptops";
 
 const laptopAPI = axios.create({
     baseURL: 'http://localhost:8080/api/laptops',
@@ -13,6 +12,7 @@ const laptopAPI = axios.create({
 });
 
 function ChitietSanpham() {
+  const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [bigimg, setBigimg] = useState(null);
   const { id } = useParams(); // Lấy ID từ URL
@@ -79,7 +79,45 @@ function ChitietSanpham() {
 
       // thông báo cho header reload cart
       window.dispatchEvent(new Event("cartUpdated"));
+      
+      // Điều hướng đến trang thanh toán
+      navigate("/ThanhToan");
 
+    } catch (error) {
+
+      console.error("Lỗi khi thêm vào giỏ:", error.response?.data || error.message);
+
+      alert("❌ Không thể thêm sản phẩm vào giỏ hàng!");
+
+    }
+  };
+
+  const addToCart = async (e) => {
+    e.preventDefault();
+
+    if (!user) {
+      alert("Bạn chưa đăng nhập! Vui lòng đăng nhập để mua hàng.");
+      return;
+    }
+
+    if (item.remain <= 0) {
+      alert("Sản phẩm đã hết hàng!");
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      await axios.post(
+        `http://localhost:8080/api/carts/${user.id}/${item.id}`
+      );
+
+      setLoading(false); 
+
+      // thông báo cho header reload cart
+      window.dispatchEvent(new Event("cartUpdated"));
+      
       alert("✅ Đã thêm sản phẩm vào giỏ hàng!");
 
     } catch (error) {
@@ -218,19 +256,13 @@ else
                 {item.name}
               </h1>
               <p>Mua ngay chỉ với</p>
-              <div>
-                <div className="now">
-                  <h1>{item.price ? item.price.toLocaleString("vi-VN") : "Đang tải..."} VND</h1>
-                  <a href="#" onClick={mua}>Mua dứt!</a>
-                  <p>hoặc</p>
-                </div>
-                <div className="monthly">
-                  <h3>{item.monthly ? item.monthly.toLocaleString("vi-VN") : "Đang tải..."} VND/tháng</h3>
-                  <a href="#" onClick={mua}>Trả góp</a>
-                </div>
+                <h1 id = "price">{item.price ? item.price.toLocaleString("vi-VN") : "Đang tải..."} VND</h1>
+              <div className="now">
+                <a href="#" onClick={mua}>Mua ngay!</a>
+                <p>hoặc</p>
+                <a href="#" onClick={addToCart}>Thêm vào<br/>giỏ hàng</a>
               </div>
-              <h3>Giá ưu đãi, mua ngay cho nóng, đừng bỏ lỡ</h3>
-              <h3>Số lượng sản phẩm chỉ còn: {item.remain} sản phẩm</h3>
+              {item.remain > 0 ? <h3>Mua ngay kẻo hết</h3> : <h3 style={{color: "red"}}>Sản phẩm tạm hết hàng!</h3>}
             </div>
             <div className="thongso">
               <h3>Thông số kĩ thuật của sản phẩm</h3>
@@ -282,7 +314,8 @@ else
             </div>
           </div>
         </div>
-        <ItemList rows={1} cols={4} />
+        <Recommend4Laptops />
+
         <div className="binhluan">
           <div className="vote">
             <h1>Đánh giá của khách hàng</h1>

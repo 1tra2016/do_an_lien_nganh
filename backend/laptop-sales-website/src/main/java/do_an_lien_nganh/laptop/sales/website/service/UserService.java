@@ -18,7 +18,7 @@ public interface UserService {
     UserInfor getUser(Long id);
     List<UserResponse> getAllUsers();
 
-    Integer getTotalItems(Long userId);
+    Integer getTotalItems(User user);
 
     List<CouponResponse> getUserCoupons(Long userId);
     void saveCoupon(Long userId, Long couponId);

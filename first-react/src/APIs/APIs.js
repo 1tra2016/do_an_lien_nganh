@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const url = process.env.REACT_APP_API_URL || "http://localhost:8080";
+const url = "http://localhost:8080";
 
 export const userAPI = axios.create({
   baseURL: url + '/api/users',
@@ -8,8 +8,32 @@ export const userAPI = axios.create({
     "Content-Type": "application/json",
   },
 });
+export const cartAPI = axios.create({
+  baseURL: url + '/api/carts',
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 export const itemAPI = axios.create({
   baseURL: url + '/api/laptops',
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+export const couponAPI = axios.create({
+  baseURL: url + '/api/coupons',
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+export const userCouponAPI = axios.create({
+  baseURL: url + '/api/users',
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+export const brandAPI = axios.create({
+  baseURL: url + '/api/brands',
   headers: {
     "Content-Type": "application/json",
   },

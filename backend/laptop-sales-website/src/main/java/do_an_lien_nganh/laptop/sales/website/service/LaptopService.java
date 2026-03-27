@@ -11,11 +11,11 @@ import java.util.List;
 public interface LaptopService {
 
     Page<LaptopResponseShort> getFilteredLaptops(
-            String keyword, int page, int size, String brand, Long minPrice, Long maxPrice, String sortField, String sortDir);
+            String keyword, int page, int size, Integer brandId, Long minPrice, Long maxPrice, String sortField, String sortDir, String stockStatus);
 
     Laptop getLaptopById(Long id);
     LaptopResponseDetail create(LaptopRequest request);
     LaptopResponseDetail update(Long id, LaptopRequest request);
     void checkStock(Long laptopId, int newQuantity);
-    List<Laptop> get4RecommendedLaptops();
+    List<LaptopResponseShort> get4RecommendedLaptops();
 }

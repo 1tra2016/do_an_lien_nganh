@@ -244,14 +244,18 @@ const KiemTraDonHang = () => {
                         {/* Total Summary */}
                         <div className="ktdh-order-total-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div className="ktdh-order-actions">
-                                {(order.status === 'pending' || order.status === 'confirmed') && (
+                                {order.status === 'pending' || order.status === 'confirmed' ? (
                                     <button
                                         onClick={(e) => handleCancelOrder(order.id, e)}
                                         style={{ background: '#e74c3c', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
                                     >
                                         <i className="fas fa-ban"></i> Hủy đơn hàng
                                     </button>
-                                )}
+                                ) : order.status === 'cancelled' && detail?.cancelReason ? (
+                                    <div style={{ color: '#e74c3c', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <i className="fas fa-info-circle"></i> Lí do hủy: {detail.cancelReason}
+                                    </div>
+                                ) : null}  
                             </div>
                             <div>
                                 <span style={{ marginRight: '10px' }}>Tổng thanh toán:</span>

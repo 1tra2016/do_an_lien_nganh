@@ -3,7 +3,7 @@ import React from 'react';
 const HomeBanner = () => {
     return (
         <div className="right">
-            <a className="product" href="#laptops">
+            <a className="product" href="#laptops" >
                 <img alt="Laptop văn phòng" src="./images/home_side_banner_1.webp" />
             </a>
             <a className="product" href="#monitors">

@@ -70,8 +70,30 @@ function Myheader() {
           <div className='main-header'>
             <div className="top-header">
               <div className="left-top-header">
-                <form onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) navigate(`/DanhmucSanpham?keyword=${encodeURIComponent(searchQuery.trim())}`); }}>
+                <form onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) navigate(`/DanhmucSanpham?keyword=${encodeURIComponent(searchQuery.trim())}`); else navigate('/DanhmucSanpham'); }} style={{ position: 'relative' }}>
                   <input type="text" placeholder="Tìm kiếm sản phẩm..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}></input>
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="search-clear-btn"
+                      style={{
+                        position: 'absolute',
+                        right: '75px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#999',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        padding: '2px',
+                        zIndex: 1
+                      }}
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  )}
                   <button type="submit"><i className="fas fa-search"></i> Tìm</button>
                 </form>
               </div>
@@ -106,7 +128,7 @@ function Myheader() {
               <div className="right-bottom-header">
                 <a href='/DanhmucSanpham' className="nav-link">
                   <i className="fas fa-bars"></i>
-                  <span>  Danh mục sản phẩm</span>
+                  <span>  Danh sách sản phẩm</span>
                 </a>
                 <a href="#hotline" className="nav-link">
                   <i className="fas fa-phone-alt"></i>

@@ -105,7 +105,7 @@ const AdminUsers = () => {
                                         {user.role === 'admin' ? 'Admin' : 'Khách hàng'}
                                     </span>
                                 </td>
-                                <td>{user.totalItems || 0} sản phẩm</td>
+                                <td>{user.role === 'admin' ? '' : `${user.totalItems} sản phẩm`}</td>
                                 <td>
                                     {user.role !== 'admin' && (
                                         <button className="admin-action-btn delete" onClick={() => handleDelete(user.id, user.name)}>

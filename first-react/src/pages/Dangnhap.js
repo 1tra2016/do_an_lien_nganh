@@ -13,15 +13,40 @@ function Dangnhap({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
 
   const laptopAPI = axios.create({
     baseURL: 'http://localhost:8080/api/users',
     headers: { "Content-Type": "application/json" },
   });
+
+  const validateEmail = (email) => {
+    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    const regex = /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/;
+    return regex.test(password);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setEmailError("");
+    setPasswordError("");
+
+    if (!validateEmail(email)) {
+      setEmailError("Email không đúng định dạng");
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setPasswordError("Mật khẩu phải ít nhất 6 ký tự, chứa ít nhất một chữ cái và một số");
+      return;
+    }
 
     try {
       
@@ -77,6 +102,7 @@ function Dangnhap({ onLogin }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required />
+          {emailError && <p style={{ color: "red", fontSize: "14px", marginTop: "5px" }}>{emailError}</p>}
 
           <input
             placeholder="Mật khẩu"
@@ -84,6 +110,7 @@ function Dangnhap({ onLogin }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required />
+          {passwordError && <p style={{ color: "red", fontSize: "14px", marginTop: "5px" }}>{passwordError}</p>}
 
           <button className="button" type="submit">Đăng nhập</button>{error && <p style={{ color: "red" }}>{error}</p>}
           <p>

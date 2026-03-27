@@ -11,8 +11,10 @@ import do_an_lien_nganh.laptop.sales.website.repository.LaptopRepository;
 import do_an_lien_nganh.laptop.sales.website.service.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -205,5 +207,15 @@ public class OrderServiceImpl implements OrderService {
         coupon.setUsedCount(coupon.getUsedCount() + 1);
         order.setCouponCode(coupon.getCode());
         return discount;
+    }
+
+    @Override
+    public List<Order> findAllBetweenTime(LocalDateTime start, LocalDateTime end){
+        return orderRepository.findAllByCreatedAtBetween(start, end);
+    }
+
+    @Override
+    public Long getTotalProductsSold(OrderStatus status, LocalDateTime start, LocalDateTime end){
+        return orderRepository.getTotalProductsSold(status, start, end);
     }
 }

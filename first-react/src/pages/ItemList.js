@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { itemAPI } from "../APIs/APIs";
 import "../css/ItemList.css";
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 4;
 
-function ItemList({ rows = 0, sapxep = null, giathap = null, giacao = null, category = null, search = "", brand = null }) {
+function ItemList({ rows = 0, sapxep = null, giathap = null, giacao = null, category = null, keyword = "", brand = null }) {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -12,13 +12,13 @@ function ItemList({ rows = 0, sapxep = null, giathap = null, giacao = null, cate
     // Reset về trang 1 khi filter thay đổi
     useEffect(() => {
         setCurrentPage(1);
-    }, [sapxep, giathap, giacao, category, search, brand]);
+    }, [sapxep, giathap, giacao, category, keyword, brand]);
 
     useEffect(() => {
         const fetchItems = async () => {
             setLoading(true);
             try {
-                const response = await itemAPI.get("/");
+                const response = await itemAPI.get("");
                 let data = response.data;
 
                 // nếu giới hạn sản phẩm đều ra thì lấy ngẫu nhiên sản phẩm
@@ -52,9 +52,9 @@ function ItemList({ rows = 0, sapxep = null, giathap = null, giacao = null, cate
                 }
 
                 // Lọc theo từ khóa tìm kiếm
-                if (search) {
-                    const searchLower = search.toLowerCase();
-                    data = data.filter((item) => item.name.toLowerCase().includes(searchLower));
+                if (keyword) {
+                    const keywordLower = keyword.toLowerCase();
+                    data = data.filter((item) => item.name.toLowerCase().includes(keywordLower));
                 }
 
                 // Lọc giá
@@ -86,7 +86,7 @@ function ItemList({ rows = 0, sapxep = null, giathap = null, giacao = null, cate
             setLoading(false);
         };
         fetchItems();
-    }, [rows, sapxep, giathap, giacao, category, search, brand]);
+    }, [rows, sapxep, giathap, giacao, category, keyword, brand]);
 
     // Tính pagination
     const totalPages = rows === 0 ? Math.ceil(items.length / ITEMS_PER_PAGE) : 1;

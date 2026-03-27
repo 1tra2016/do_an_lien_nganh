@@ -8,6 +8,7 @@ import do_an_lien_nganh.laptop.sales.website.enums.OrderStatus;
 import do_an_lien_nganh.laptop.sales.website.mapper.OrderMapper;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,8 +19,11 @@ public interface OrderService {
     OrderResponseShort getOrderShort(Long id);
 
     OrderResponseDetail getOrderDetail(Long id);
-    public void cancelOrder(Long orderId, String reason);
+    void cancelOrder(Long orderId, String reason);
     OrderResponseShort updateStatus(Long orderId, String status);
 
     OrderResponseDetail createOrderFromCart(Long userId, OrderRequest req);
+
+    List<Order> findAllBetweenTime(LocalDateTime start, LocalDateTime end);
+    Long getTotalProductsSold(OrderStatus status, LocalDateTime start, LocalDateTime end);
 }
